@@ -175,7 +175,7 @@ namespace PcLocker
         private void ShowWarning(int secondsLeft)
         {
             var remaining = TimeSpan.FromSeconds(secondsLeft);
-            var message = $"Time remaining: {remaining:hh\:mm\:ss}";
+            var message = $"Time remaining: {remaining:hh\\:mm\\:ss}";
             MessageBox.Show(message, "PC Locker", MessageBoxButton.OK, MessageBoxImage.Warning, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
         }
 
