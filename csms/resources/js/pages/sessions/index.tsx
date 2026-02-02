@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { Clock3, User, Monitor } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -57,6 +57,7 @@ export default function SessionsIndex({ sessions }: Props) {
                                 <th className="px-4 py-3 font-medium">Rate</th>
                                 <th className="px-4 py-3 font-medium">Started</th>
                                 <th className="px-4 py-3 font-medium">Ends</th>
+                                <th className="px-4 py-3 font-medium text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -85,6 +86,9 @@ export default function SessionsIndex({ sessions }: Props) {
                                     </td>
                                     <td className="px-4 py-3">{new Date(session.started_at).toLocaleString()}</td>
                                     <td className="px-4 py-3">{new Date(session.ends_at).toLocaleString()}</td>
+                                    <td className="px-4 py-3 text-right">
+                                        <EndSessionButton sessionId={session.id} endsAt={session.ends_at} />
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
@@ -92,5 +96,31 @@ export default function SessionsIndex({ sessions }: Props) {
                 </div>
             </div>
         </AppLayout>
+    );
+}
+
+function EndSessionButton({ sessionId, endsAt }: { sessionId: number; endsAt: string }) {
+    const form = useForm({});
+    const inFuture = new Date(endsAt).getTime() > Date.now();
+
+    if (!inFuture) {
+        return <span className="text-xs text-neutral-500">Ended</span>;
+    }
+
+    return (
+        <form
+            onSubmit={(e) => {
+                e.preventDefault();
+                form.post(`/sessions/${sessionId}/end`, { preserveScroll: true });
+            }}
+        >
+            <button
+                type="submit"
+                disabled={form.processing}
+                className="rounded bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
+            >
+                {form.processing ? 'Ending…' : 'End Now'}
+            </button>
+        </form>
     );
 }

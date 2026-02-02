@@ -20,6 +20,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('pcs', [PcViewController::class, 'index'])->name('pcs.index');
     Route::patch('pcs/{pc}/minutes', [PcViewController::class, 'updateMinutes'])->name('pcs.minutes');
     Route::get('sessions', [SessionViewController::class, 'index'])->name('sessions.index');
+    Route::post('sessions/{session}/end', [SessionViewController::class, 'end'])->name('sessions.end');
 });
 
 require __DIR__.'/settings.php';

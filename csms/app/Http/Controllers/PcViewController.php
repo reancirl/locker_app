@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Pc;
+use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,7 +20,7 @@ class PcViewController extends Controller
         ]);
     }
 
-    public function updateMinutes(Request $request, Pc $pc): Response
+    public function updateMinutes(Request $request, Pc $pc): RedirectResponse
     {
         $data = $request->validate([
             'default_minutes' => 'required|integer|min:1|max:480',
