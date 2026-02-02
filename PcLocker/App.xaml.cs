@@ -24,7 +24,7 @@ namespace PcLocker
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            Logging.Write("Unhandled exception", e.Exception as Exception);
+            Logging.Write("Unhandled exception", e.ExceptionObject as Exception);
         }
 
         private void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
