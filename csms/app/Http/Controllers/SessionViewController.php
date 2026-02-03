@@ -12,11 +12,11 @@ use Illuminate\Support\Carbon;
 
 class SessionViewController extends Controller
 {
-    public function index(): Response
+    public function index()
     {
         $now = Carbon::now('Asia/Manila');
 
-        $sessions = CafeSession::with(['user:id,username,name', 'pc:id,device_id,name'])
+        return $sessions = CafeSession::with(['user:id,username,name', 'pc:id,device_id,name'])
             ->where('ends_at', '>', $now)
             ->orderByDesc('started_at')
             ->get([
