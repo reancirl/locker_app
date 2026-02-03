@@ -12,9 +12,9 @@ use Illuminate\Support\Carbon;
 
 class SessionViewController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
-        $now = now(); // keep it as Carbon, in app timezone
+        $now = Carbon::now('Asia/Manila');
 
         $sessions = CafeSession::with(['user:id,username,name', 'pc:id,device_id,name'])
             ->where('ends_at', '>', $now)
@@ -30,23 +30,17 @@ class SessionViewController extends Controller
                 'created_at',
             ])
             ->map(function ($session) use ($now) {
+                // Compute minutes from stored start time; fallback to created_at if somehow missing
                 $start = $session->started_at ?? $session->created_at ?? $now;
+                $minutes = max(0, $start->diffInMinutes($now));
 
-                // Force consistent timezone (optional but recommended)
-                $start = $start->copy()->utc();
-                $nowUtc = $now->copy()->utc();
-
-                // Minutes used = now - start (signed), clamp to 0
-                $minutes = max(0, $nowUtc->diffInMinutes($start, false));
-
-                $cost = round(($minutes / 60) * (float) $session->rate_php, 2);
+                // Cost is pro-rated per minute based on hourly rate_php
+                $cost = round(($minutes / 60) * $session->rate_php, 2);
 
                 $session->time_used_minutes = $minutes;
                 $session->estimated_cost = $cost;
-
                 return $session;
             });
-
 
         return Inertia::render('sessions/index', [
             'sessions' => $sessions,
