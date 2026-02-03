@@ -1,5 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
-import { Clock3, User, Monitor } from 'lucide-react';
+import { Clock3, Monitor } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -55,11 +55,8 @@ export default function SessionsIndex({ sessions, now }: Props) {
                         <thead className="bg-neutral-50 text-left text-neutral-600 dark:bg-neutral-900 dark:text-neutral-300">
                             <tr className="text-xs font-semibold uppercase tracking-wide">
                                 <th className="px-4 py-3">PC</th>
-                                <th className="px-4 py-3">User</th>
                                 <th className="px-4 py-3">Rate</th>
-                                <th className="px-4 py-3">Used</th>
-                                <th className="px-4 py-3">Started</th>
-                                <th className="px-4 py-3">Ends</th>
+                                <th className="px-4 py-3">Used (mins)</th>
                                 <th className="px-4 py-3 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -83,19 +80,13 @@ export default function SessionsIndex({ sessions, now }: Props) {
                                             <div className="text-xs text-neutral-500">{session.device_id}</div>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-3 flex items-center gap-2">
-                                        <User className="h-4 w-4 text-neutral-400" />
-                                        {session.user?.username ?? 'Walk-in'}
-                                    </td>
                                     <td className="px-4 py-3">
                                         <span className="capitalize">{session.rate_type}</span>
                                         <span className="ml-1 font-semibold">· ₱{session.rate_php}</span>
                                     </td>
                                     <td className="px-4 py-3">
-                                        {formatDuration(nowDate, new Date(session.started_at))}
+                                        {formatMinutes(new Date(session.started_at))} min
                                     </td>
-                                    <td className="px-4 py-3">{new Date(session.started_at).toLocaleString()}</td>
-                                    <td className="px-4 py-3">{new Date(session.ends_at).toLocaleString()}</td>
                                     <td className="px-4 py-3 text-right">
                                         <EndSessionButton sessionId={session.id} endsAt={session.ends_at} />
                                     </td>
@@ -135,10 +126,8 @@ function EndSessionButton({ sessionId, endsAt }: { sessionId: number; endsAt: st
     );
 }
 
-function formatDuration(now: Date, start: Date) {
+function formatMinutes(start: Date) {
+    const now = new Date();
     const diffMs = Math.max(0, now.getTime() - start.getTime());
-    const totalMinutes = Math.floor(diffMs / 60000);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    return `${hours}h ${minutes}m`;
+    return Math.floor(diffMs / 60000);
 }
