@@ -14,43 +14,29 @@ class SessionViewController extends Controller
 {
     public function index()
     {
-        $now = now(); // keep it as Carbon, in app timezone
+        $nowUtc = now()->utc();
 
         $sessions = CafeSession::with(['user:id,username,name', 'pc:id,device_id,name'])
-            ->where('ends_at', '<', $now)
+            ->where('ends_at', '>', $nowUtc)
             ->orderByDesc('started_at')
             ->get([
-                'id',
-                'device_id',
-                'user_id',
-                'started_at',
-                'ends_at',
-                'rate_type',
-                'rate_php',
-                'created_at',
+                'id','device_id','user_id','started_at','ends_at','rate_type','rate_php','created_at',
             ])
-            ->map(function ($session) use ($now) {
-                $start = $session->started_at ?? $session->created_at ?? $now;
+            ->map(function ($session) use ($nowUtc) {
+                $start = ($session->started_at ?? $session->created_at ?? $nowUtc)->copy()->utc();
 
-                // Force consistent timezone (optional but recommended)
-                $start = $start->copy()->utc();
-                $nowUtc = $now->copy()->utc();
-
-                // Minutes used = now - start (signed), clamp to 0
                 $minutes = max(0, $nowUtc->diffInMinutes($start, false));
-
-                $cost = round(($minutes / 60) * (float) $session->rate_php, 2);
-
                 $session->time_used_minutes = $minutes;
-                $session->estimated_cost = $cost;
+                $session->estimated_cost = round(($minutes / 60) * (float) $session->rate_php, 2);
 
                 return $session;
-            });
+        });
+
 
 
         return Inertia::render('sessions/index', [
             'sessions' => $sessions,
-            'now' => $now->toIso8601String(),
+            'now' => $nowUtc->toIso8601String(),
         ]);
     }
 
