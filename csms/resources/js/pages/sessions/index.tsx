@@ -56,7 +56,7 @@ export default function SessionsIndex({ sessions, now }: Props) {
                             <tr className="text-xs font-semibold uppercase tracking-wide">
                                 <th className="px-4 py-3">PC</th>
                                 <th className="px-4 py-3">Rate</th>
-                                <th className="px-4 py-3">Used (mins)</th>
+                                <th className="px-4 py-3">Used (mins) / ₱</th>
                                 <th className="px-4 py-3 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -86,6 +86,9 @@ export default function SessionsIndex({ sessions, now }: Props) {
                                     </td>
                                     <td className="px-4 py-3">
                                         {formatMinutes(new Date(session.started_at))} min
+                                        <div className="text-xs text-neutral-500">
+                                            ₱{formatCost(formatMinutes(new Date(session.started_at)), session.rate_php)}
+                                        </div>
                                     </td>
                                     <td className="px-4 py-3 text-right">
                                         <EndSessionButton sessionId={session.id} endsAt={session.ends_at} />
@@ -130,4 +133,8 @@ function formatMinutes(start: Date) {
     const now = new Date();
     const diffMs = Math.max(0, now.getTime() - start.getTime());
     return Math.floor(diffMs / 60000);
+}
+
+function formatCost(minutes: number, rate: number) {
+    return (minutes * rate).toFixed(2);
 }

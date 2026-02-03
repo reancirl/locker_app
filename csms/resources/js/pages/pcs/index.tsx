@@ -43,7 +43,6 @@ export default function PcIndex({ pcs }: Props) {
                             <tr>
                                 <th className="px-4 py-3 font-medium">Device ID</th>
                                 <th className="px-4 py-3 font-medium">Name</th>
-                                <th className="px-4 py-3 font-medium">Default Minutes</th>
                                 <th className="px-4 py-3 font-medium">Unlocks Until</th>
                                 <th className="px-4 py-3 font-medium">Last Seen</th>
                                 <th className="px-4 py-3 font-medium">Created</th>
@@ -65,9 +64,6 @@ export default function PcIndex({ pcs }: Props) {
                                 >
                                     <td className="px-4 py-3 font-semibold">{pc.device_id}</td>
                                     <td className="px-4 py-3">{pc.name ?? '—'}</td>
-                                    <td className="px-4 py-3">
-                                        <MinutesForm pc={pc} />
-                                    </td>
                                     <td className="px-4 py-3 flex items-center gap-2">
                                         <Clock className="h-4 w-4 text-neutral-400" />
                                         {pc.unlocked_until ?? 'Locked'}
@@ -84,46 +80,6 @@ export default function PcIndex({ pcs }: Props) {
                 </div>
             </div>
         </AppLayout>
-    );
-}
-
-function MinutesForm({ pc }: { pc: Pc }) {
-    const form = useForm({ default_minutes: pc.default_minutes });
-
-    return (
-        <form
-            className="flex items-center gap-2"
-            onSubmit={(e) => {
-                e.preventDefault();
-                form.patch(`/pcs/${pc.id}/minutes`, {
-                    preserveScroll: true,
-                });
-            }}
-        >
-            <input
-                type="number"
-                min={1}
-                max={480}
-                className="h-9 w-20 rounded border border-neutral-300 bg-transparent px-2 text-right text-sm dark:border-neutral-700"
-                value={form.data.default_minutes}
-                onChange={(e) =>
-                    form.setData('default_minutes', Number(e.target.value))
-                }
-            />
-            <button
-                type="submit"
-                className="rounded bg-neutral-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-100"
-                disabled={form.processing}
-                title="Save minutes for this PC"
-            >
-                {form.processing ? 'Saving…' : 'Save'}
-            </button>
-            {form.errors.default_minutes && (
-                <span className="text-xs text-red-500">
-                    {form.errors.default_minutes}
-                </span>
-            )}
-        </form>
     );
 }
 
