@@ -1,5 +1,6 @@
 import { Head, useForm } from '@inertiajs/react';
 import { Clock3, Monitor } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -37,6 +38,14 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function SessionsIndex({ sessions, now }: Props) {
+    const [nowMs, setNowMs] = useState(new Date(now).getTime());
+
+    // lightweight client-side tick so minutes/cost update without reload
+    useEffect(() => {
+        const id = setInterval(() => setNowMs(Date.now()), 15000); // every 15s
+        return () => clearInterval(id);
+    }, []);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Active Sessions" />
@@ -86,9 +95,9 @@ export default function SessionsIndex({ sessions, now }: Props) {
                                         <span className="ml-1 font-semibold">· ₱{session.rate_php}</span>
                                     </td>
                                     <td className="px-4 py-3">
-                                        {session.time_used_minutes ?? 0} min
+                                        {formatMinutes(session.started_at, nowMs)} min
                                         <div className="text-xs text-neutral-500">
-                                            ₱{(session.estimated_cost ?? 0).toFixed(2)}
+                                            ₱{formatCost(formatMinutes(session.started_at, nowMs), session.rate_php)}
                                         </div>
                                     </td>
                                     <td className="px-4 py-3 text-right">
@@ -130,4 +139,12 @@ function EndSessionButton({ sessionId, endsAt }: { sessionId: number; endsAt: st
     );
 }
 
-// client helpers no longer needed; kept for potential future client-side display tweaks
+function formatMinutes(startIso: string, nowMs: number) {
+    const startMs = new Date(startIso).getTime();
+    const diffMs = Math.max(0, nowMs - startMs);
+    return Math.floor(diffMs / 60000);
+}
+
+function formatCost(minutes: number, rate: number) {
+    return ((minutes / 60) * rate).toFixed(2);
+}
