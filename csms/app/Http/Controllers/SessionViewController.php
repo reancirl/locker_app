@@ -17,7 +17,7 @@ class SessionViewController extends Controller
         // Use app timezone (likely UTC) for consistency with stored timestamps
         $now = now();
 
-        return $sessions = CafeSession::with(['user:id,username,name', 'pc:id,device_id,name'])
+        $sessions = CafeSession::with(['user:id,username,name', 'pc:id,device_id,name'])
             ->where('ends_at', '>', $now)
             ->orderByDesc('started_at')
             ->get([
