@@ -14,9 +14,11 @@ class SessionViewController extends Controller
 {
     public function index(): Response
     {
+        $now = Carbon::now('Asia/Manila');
+
         $sessions = CafeSession::with(['user:id,username,name', 'pc:id,device_id,name'])
+            ->where('ends_at', '>', $now)
             ->orderByDesc('started_at')
-            ->take(100)
             ->get([
                 'id',
                 'device_id',
@@ -30,6 +32,7 @@ class SessionViewController extends Controller
 
         return Inertia::render('sessions/index', [
             'sessions' => $sessions,
+            'now' => $now->toIso8601String(),
         ]);
     }
 

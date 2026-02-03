@@ -26,6 +26,7 @@ interface SessionItem {
 
 interface Props {
     sessions: SessionItem[];
+    now: string;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -33,7 +34,8 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Sessions', href: '/sessions' },
 ];
 
-export default function SessionsIndex({ sessions }: Props) {
+export default function SessionsIndex({ sessions, now }: Props) {
+    const nowDate = new Date(now);
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Sessions" />
@@ -55,6 +57,7 @@ export default function SessionsIndex({ sessions }: Props) {
                                 <th className="px-4 py-3 font-medium">PC</th>
                                 <th className="px-4 py-3 font-medium">User</th>
                                 <th className="px-4 py-3 font-medium">Rate</th>
+                                <th className="px-4 py-3 font-medium">Time Used</th>
                                 <th className="px-4 py-3 font-medium">Started</th>
                                 <th className="px-4 py-3 font-medium">Ends</th>
                                 <th className="px-4 py-3 font-medium text-right">Actions</th>
@@ -83,6 +86,9 @@ export default function SessionsIndex({ sessions }: Props) {
                                     </td>
                                     <td className="px-4 py-3 capitalize">
                                         {session.rate_type} · ₱{session.rate_php}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        {formatDuration(nowDate, new Date(session.started_at))}
                                     </td>
                                     <td className="px-4 py-3">{new Date(session.started_at).toLocaleString()}</td>
                                     <td className="px-4 py-3">{new Date(session.ends_at).toLocaleString()}</td>
@@ -123,4 +129,12 @@ function EndSessionButton({ sessionId, endsAt }: { sessionId: number; endsAt: st
             </button>
         </form>
     );
+}
+
+function formatDuration(now: Date, start: Date) {
+    const diffMs = Math.max(0, now.getTime() - start.getTime());
+    const totalMinutes = Math.floor(diffMs / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `${hours}h ${minutes}m`;
 }
