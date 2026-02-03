@@ -30,11 +30,15 @@ class SessionViewController extends Controller
                 'created_at',
             ])
             ->map(function ($session) use ($now) {
-                $minutes = $session->started_at
-                    ? max(0, $session->started_at->diffInMinutes($now))
-                    : 0;
+                // Compute minutes from stored start time; fallback to created_at if somehow missing
+                $start = $session->started_at ?? $session->created_at ?? $now;
+                $minutes = max(0, $start->diffInMinutes($now));
+
+                // Cost is pro-rated per minute based on hourly rate_php
+                $cost = round(($minutes / 60) * $session->rate_php, 2);
+
                 $session->time_used_minutes = $minutes;
-                $session->estimated_cost = $minutes * $session->rate_php;
+                $session->estimated_cost = $cost;
                 return $session;
             });
 

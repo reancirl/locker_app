@@ -88,7 +88,7 @@ export default function SessionsIndex({ sessions, now }: Props) {
                                     <td className="px-4 py-3">
                                         {session.time_used_minutes ?? 0} min
                                         <div className="text-xs text-neutral-500">
-                                            ₱{session.estimated_cost?.toFixed(2) ?? '0.00'}
+                                            ₱{(session.estimated_cost ?? 0).toFixed(2)}
                                         </div>
                                     </td>
                                     <td className="px-4 py-3 text-right">
