@@ -31,43 +31,43 @@ interface Props {
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Sessions', href: '/sessions' },
+    { title: 'Active Sessions', href: '/sessions' },
 ];
 
 export default function SessionsIndex({ sessions, now }: Props) {
     const nowDate = new Date(now);
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Sessions" />
+            <Head title="Active Sessions" />
             <div className="flex flex-col gap-4 p-4">
-                <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-100 text-neutral-700 dark:bg-neutral-900 dark:text-neutral-200">
+                <header className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 dark:bg-neutral-900 dark:text-emerald-300">
                         <Clock3 className="h-5 w-5" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-semibold">Active & Recent Sessions</h1>
-                        <p className="text-sm text-neutral-500">Last 100 sessions</p>
+                        <h1 className="text-2xl font-semibold">Active Sessions</h1>
+                        <p className="text-sm text-neutral-500">Currently running sessions only</p>
                     </div>
-                </div>
+                </header>
 
-                <div className="overflow-hidden rounded-xl border border-sidebar-border/70 bg-white shadow-sm dark:border-sidebar-border dark:bg-neutral-950">
+                <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
                     <table className="min-w-full text-sm">
                         <thead className="bg-neutral-50 text-left text-neutral-600 dark:bg-neutral-900 dark:text-neutral-300">
-                            <tr>
-                                <th className="px-4 py-3 font-medium">PC</th>
-                                <th className="px-4 py-3 font-medium">User</th>
-                                <th className="px-4 py-3 font-medium">Rate</th>
-                                <th className="px-4 py-3 font-medium">Time Used</th>
-                                <th className="px-4 py-3 font-medium">Started</th>
-                                <th className="px-4 py-3 font-medium">Ends</th>
-                                <th className="px-4 py-3 font-medium text-right">Actions</th>
+                            <tr className="text-xs font-semibold uppercase tracking-wide">
+                                <th className="px-4 py-3">PC</th>
+                                <th className="px-4 py-3">User</th>
+                                <th className="px-4 py-3">Rate</th>
+                                <th className="px-4 py-3">Used</th>
+                                <th className="px-4 py-3">Started</th>
+                                <th className="px-4 py-3">Ends</th>
+                                <th className="px-4 py-3 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {sessions.length === 0 && (
                                 <tr>
-                                    <td className="px-4 py-4 text-center text-neutral-500" colSpan={5}>
-                                        No sessions yet.
+                                    <td className="px-4 py-8 text-center text-neutral-500" colSpan={7}>
+                                        No active sessions.
                                     </td>
                                 </tr>
                             )}
@@ -78,14 +78,18 @@ export default function SessionsIndex({ sessions, now }: Props) {
                                 >
                                     <td className="px-4 py-3 flex items-center gap-2 font-semibold">
                                         <Monitor className="h-4 w-4 text-neutral-400" />
-                                        {session.pc?.name ?? session.device_id}
+                                        <div className="leading-tight">
+                                            <div>{session.pc?.name ?? session.device_id}</div>
+                                            <div className="text-xs text-neutral-500">{session.device_id}</div>
+                                        </div>
                                     </td>
                                     <td className="px-4 py-3 flex items-center gap-2">
                                         <User className="h-4 w-4 text-neutral-400" />
                                         {session.user?.username ?? 'Walk-in'}
                                     </td>
-                                    <td className="px-4 py-3 capitalize">
-                                        {session.rate_type} · ₱{session.rate_php}
+                                    <td className="px-4 py-3">
+                                        <span className="capitalize">{session.rate_type}</span>
+                                        <span className="ml-1 font-semibold">· ₱{session.rate_php}</span>
                                     </td>
                                     <td className="px-4 py-3">
                                         {formatDuration(nowDate, new Date(session.started_at))}
