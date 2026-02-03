@@ -12,7 +12,7 @@ use Illuminate\Support\Carbon;
 
 class SessionViewController extends Controller
 {
-    public function index(): Response
+    public function index()
     {
         $now = Carbon::now('Asia/Manila');
 
