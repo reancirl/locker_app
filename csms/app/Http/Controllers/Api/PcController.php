@@ -20,14 +20,20 @@ class PcController extends Controller
         $pc->save();
 
         $session = CafeSession::where('device_id', $deviceId)
-            ->where('ends_at', '>=', $now)
+            ->where('ends_at', '>', $now) // strictly in the future
             ->orderByDesc('ends_at')
             ->first();
 
-        $unlockedUntil = $session?->ends_at ?? $pc->unlocked_until;
-        if (!$unlockedUntil || $unlockedUntil->lessThanOrEqualTo($now)) {
+        // If no active session, lock and clear cached unlock
+        if (!$session) {
+            if ($pc->unlocked_until) {
+                $pc->unlocked_until = null;
+                $pc->save();
+            }
             return response()->json(['mode' => 'locked']);
         }
+
+        $unlockedUntil = $session->ends_at;
 
         // keep pc cache in sync
         if (!$pc->unlocked_until || !$pc->unlocked_until->equalTo($unlockedUntil)) {
