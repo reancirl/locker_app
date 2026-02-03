@@ -46,6 +46,8 @@ export default function SessionsIndex({ sessions, now }: Props) {
         return () => clearInterval(id);
     }, []);
 
+    const activeSessions = sessions.filter((session) => new Date(session.ends_at).getTime() > nowMs);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Active Sessions" />
@@ -71,14 +73,18 @@ export default function SessionsIndex({ sessions, now }: Props) {
                             </tr>
                         </thead>
                         <tbody>
-                            {sessions.length === 0 && (
+                            {activeSessions.length === 0 && (
                                 <tr>
                                     <td className="px-4 py-8 text-center text-neutral-500" colSpan={7}>
                                         No active sessions.
                                     </td>
                                 </tr>
                             )}
-                            {sessions.map((session) => (
+                            {activeSessions.map((session) => {
+                                const minutes = session.time_used_minutes ?? formatMinutes(session.started_at, nowMs);
+                                const cost = session.estimated_cost ?? formatCost(minutes, session.rate_php);
+
+                                return (
                                 <tr
                                     key={session.id}
                                     className="border-t border-neutral-100 last:border-b dark:border-neutral-800"
@@ -95,16 +101,17 @@ export default function SessionsIndex({ sessions, now }: Props) {
                                         <span className="ml-1 font-semibold">· ₱{session.rate_php}</span>
                                     </td>
                                     <td className="px-4 py-3">
-                                        {formatMinutes(session.started_at, nowMs)} min
+                                        {minutes} min
                                         <div className="text-xs text-neutral-500">
-                                            ₱{formatCost(formatMinutes(session.started_at, nowMs), session.rate_php)}
+                                            ₱{Number(cost).toFixed(2)}
                                         </div>
                                     </td>
                                     <td className="px-4 py-3 text-right">
                                         <EndSessionButton sessionId={session.id} endsAt={session.ends_at} />
                                     </td>
                                 </tr>
-                            ))}
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
