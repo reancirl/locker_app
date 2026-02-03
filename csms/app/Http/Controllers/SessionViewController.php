@@ -17,7 +17,7 @@ class SessionViewController extends Controller
         $now = now(); // keep it as Carbon, in app timezone
 
         $sessions = CafeSession::with(['user:id,username,name', 'pc:id,device_id,name'])
-            ->where('ends_at', '>', $now)
+            ->where('ends_at', '<', $now)
             ->orderByDesc('started_at')
             ->get([
                 'id',
