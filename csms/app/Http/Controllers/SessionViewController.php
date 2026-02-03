@@ -28,7 +28,15 @@ class SessionViewController extends Controller
                 'rate_type',
                 'rate_php',
                 'created_at',
-            ]);
+            ])
+            ->map(function ($session) use ($now) {
+                $minutes = $session->started_at
+                    ? max(0, $session->started_at->diffInMinutes($now))
+                    : 0;
+                $session->time_used_minutes = $minutes;
+                $session->estimated_cost = $minutes * $session->rate_php;
+                return $session;
+            });
 
         return Inertia::render('sessions/index', [
             'sessions' => $sessions,
