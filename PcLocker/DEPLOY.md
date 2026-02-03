@@ -35,7 +35,7 @@ schtasks /Create /TN "PcLocker" /SC ONSTART /RL HIGHEST /TR "`""$exe`""" /F
 
 ## Operations
 - App fails safe to locked when the API is unreachable.
-- “Start Session” on the overlay creates a guest/walk-in 1-hour session; accounts are not required.
+- Sessions are started from the Laravel web app (PCs page); PcLocker only follows server state.
 - Server `unlocked_until` is authoritative; local timer re-locks when it elapses.
 - Warnings fire at thresholds returned by the API (e.g., 300s, 60s).
 - Alt+F4 is blocked in Release; window auto-raises if focus is lost while locked.

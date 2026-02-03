@@ -66,4 +66,4 @@ Optionally add `/DELAY 0000:10` and `/RU SYSTEM`.
 - Deploy Laravel (`csms/`) to `https://hub.betheldigitalservices.info`.
 - The locker fails safe to locked when the API is unreachable.
 - Warnings fire at 5 minutes and 1 minute by default (server response `warnings`).
-- Locker “Start Session” button now starts a guest/walk-in 1-hour session; accounts are not required.
+- Sessions are now started from the Laravel UI (PCs page). PcLocker only follows server state.

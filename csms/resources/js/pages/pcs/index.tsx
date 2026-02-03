@@ -1,5 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
-import { Monitor, Clock } from 'lucide-react';
+import { Monitor, Clock, Play } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -47,6 +47,7 @@ export default function PcIndex({ pcs }: Props) {
                                 <th className="px-4 py-3 font-medium">Unlocks Until</th>
                                 <th className="px-4 py-3 font-medium">Last Seen</th>
                                 <th className="px-4 py-3 font-medium">Created</th>
+                                <th className="px-4 py-3 font-medium text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -73,6 +74,9 @@ export default function PcIndex({ pcs }: Props) {
                                     </td>
                                     <td className="px-4 py-3">{pc.last_seen_at ?? '—'}</td>
                                     <td className="px-4 py-3 text-neutral-500">{new Date(pc.created_at).toLocaleString()}</td>
+                                    <td className="px-4 py-3 text-right">
+                                        <StartSessionForm pc={pc} />
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
@@ -119,6 +123,38 @@ function MinutesForm({ pc }: { pc: Pc }) {
                     {form.errors.default_minutes}
                 </span>
             )}
+        </form>
+    );
+}
+
+function StartSessionForm({ pc }: { pc: Pc }) {
+    const form = useForm<{ minutes: number }>({ minutes: pc.default_minutes ?? 60 });
+
+    return (
+        <form
+            className="flex items-center gap-2 justify-end"
+            onSubmit={(e) => {
+                e.preventDefault();
+                form.post(`/pcs/${pc.id}/sessions/start`, { preserveScroll: true });
+            }}
+        >
+            <input
+                type="number"
+                min={1}
+                max={480}
+                className="h-9 w-16 rounded border border-neutral-300 bg-transparent px-2 text-right text-sm dark:border-neutral-700"
+                value={form.data.minutes}
+                onChange={(e) => form.setData('minutes', Number(e.target.value))}
+                title="Minutes"
+            />
+            <button
+                type="submit"
+                disabled={form.processing}
+                className="inline-flex items-center gap-1 rounded bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+            >
+                <Play className="h-3.5 w-3.5" />
+                {form.processing ? 'Starting…' : 'Start'}
+            </button>
         </form>
     );
 }

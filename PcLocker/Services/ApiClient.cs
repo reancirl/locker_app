@@ -40,16 +40,6 @@ namespace PcLocker
             return await JsonSerializer.DeserializeAsync<PcStateResponse>(stream, _jsonOptions, cancellationToken);
         }
 
-        public async Task<LoginResponse?> LoginAsync(string deviceId, int minutes, CancellationToken cancellationToken)
-        {
-            var payload = new { device_id = deviceId, minutes };
-            var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-            using var response = await _client.PostAsync("/api/sessions/login", content, cancellationToken);
-            response.EnsureSuccessStatusCode();
-            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-            return await JsonSerializer.DeserializeAsync<LoginResponse>(stream, _jsonOptions, cancellationToken);
-        }
-
         public void Dispose()
         {
             if (_disposed) return;

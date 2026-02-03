@@ -179,46 +179,6 @@ namespace PcLocker
             MessageBox.Show(message, "PC Locker", MessageBoxButton.OK, MessageBoxImage.Warning, MessageBoxResult.OK, MessageBoxOptions.DefaultDesktopOnly);
         }
 
-        private async void LoginButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (_apiClient == null || _settings == null) return;
-
-            try
-            {
-                LoginButton.IsEnabled = false;
-                StatusText.Text = "Starting session...";
-                var response = await _apiClient.LoginAsync(_settings.DeviceId, 60, _cts.Token);
-                if (response?.Ok == true)
-                {
-                    StatusText.Text = "Session started. Syncing...";
-                    if (response.UnlockedUntil.HasValue)
-                    {
-                        ApplyState(new PcStateResponse
-                        {
-                            Mode = "unlocked",
-                            SessionId = response.SessionId,
-                            UnlockedUntil = response.UnlockedUntil,
-                            Warnings = new[] { 300, 60 }
-                        });
-                    }
-                    await TriggerImmediatePoll();
-                }
-                else
-                {
-                    StatusText.Text = response?.Message ?? "Start failed";
-                }
-            }
-            catch (Exception ex)
-            {
-                StatusText.Text = "Start failed. API unavailable.";
-                Logging.Write("Start session failed", ex);
-                TransitionToLocked(true);
-            }
-            finally
-            {
-                LoginButton.IsEnabled = true;
-            }
-        }
 
         private async Task TriggerImmediatePoll()
         {
