@@ -1,5 +1,6 @@
 import { Head, useForm } from '@inertiajs/react';
 import { Clock3, Monitor } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
@@ -35,7 +36,13 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function SessionsIndex({ sessions, now }: Props) {
-    const nowDate = new Date(now);
+    const [nowMs, setNowMs] = useState(new Date(now).getTime());
+
+    useEffect(() => {
+        const id = setInterval(() => setNowMs(Date.now()), 15000); // refresh every 15s
+        return () => clearInterval(id);
+    }, []);
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Active Sessions" />
@@ -85,9 +92,9 @@ export default function SessionsIndex({ sessions, now }: Props) {
                                         <span className="ml-1 font-semibold">· ₱{session.rate_php}</span>
                                     </td>
                                     <td className="px-4 py-3">
-                                        {formatMinutes(new Date(session.started_at))} min
+                                        {formatMinutes(new Date(session.started_at), nowMs)} min
                                         <div className="text-xs text-neutral-500">
-                                            ₱{formatCost(formatMinutes(new Date(session.started_at)), session.rate_php)}
+                                            ₱{formatCost(formatMinutes(new Date(session.started_at), nowMs), session.rate_php)}
                                         </div>
                                     </td>
                                     <td className="px-4 py-3 text-right">
@@ -129,9 +136,8 @@ function EndSessionButton({ sessionId, endsAt }: { sessionId: number; endsAt: st
     );
 }
 
-function formatMinutes(start: Date) {
-    const now = new Date();
-    const diffMs = Math.max(0, now.getTime() - start.getTime());
+function formatMinutes(start: Date, nowMs: number) {
+    const diffMs = Math.max(0, nowMs - start.getTime());
     return Math.floor(diffMs / 60000);
 }
 
