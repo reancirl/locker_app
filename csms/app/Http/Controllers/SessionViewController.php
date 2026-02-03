@@ -14,7 +14,8 @@ class SessionViewController extends Controller
 {
     public function index()
     {
-        $now = Carbon::now('Asia/Manila');
+        // Use app timezone (likely UTC) for consistency with stored timestamps
+        $now = now();
 
         return $sessions = CafeSession::with(['user:id,username,name', 'pc:id,device_id,name'])
             ->where('ends_at', '>', $now)
@@ -32,7 +33,7 @@ class SessionViewController extends Controller
             ->map(function ($session) use ($now) {
                 // Compute minutes from stored start time; fallback to created_at if somehow missing
                 $start = $session->started_at ?? $session->created_at ?? $now;
-                $minutes = max(0, $start->diffInMinutes($now));
+                $minutes = $start->greaterThan($now) ? 0 : $start->diffInMinutes($now);
 
                 // Cost is pro-rated per minute based on hourly rate_php
                 $cost = round(($minutes / 60) * $session->rate_php, 2);
