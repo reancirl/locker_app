@@ -49,7 +49,7 @@ class PcViewController extends Controller
             'started_at' => $now,
             'ends_at' => $endsAt,
             'rate_type' => 'walkin',
-            'rate_php' => 18,
+            'rate_php' => 15,
         ]);
 
         $pc->unlocked_until = $endsAt;

@@ -13,7 +13,7 @@ use Illuminate\Support\Carbon;
 class SessionController extends Controller
 {
     private int $defaultMinutes = 60;
-    private int $walkInRate = 18;
+    private int $walkInRate = 15;
 
     public function login(Request $request): JsonResponse
     {

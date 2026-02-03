@@ -40,7 +40,7 @@ class SessionViewController extends Controller
         $session->save();
 
         $pc = Pc::firstOrCreate(['device_id' => $session->device_id]);
-        $pc->unlocked_until = $now;
+        $pc->unlocked_until = $now->copy()->subSecond(); // force lock immediately
         $pc->last_seen_at = $now;
         $pc->save();
 
