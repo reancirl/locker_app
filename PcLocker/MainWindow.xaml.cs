@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Threading;
 using PcLocker.Models;
 
@@ -88,10 +89,27 @@ namespace PcLocker
 
         private void ApplyState(PcStateResponse state)
         {
+            var isOpen = state.IsOpen || string.Equals(state.Mode, "open", StringComparison.OrdinalIgnoreCase);
+            if (isOpen)
+            {
+                _unlockedUntil = null;
+                _warningThresholds = Array.Empty<int>();
+                _warningsFired.Clear();
+                StatusText.Text = "Unlocked (open time)";
+                TransitionToUnlocked();
+                return;
+            }
+
             if (string.Equals(state.Mode, "unlocked", StringComparison.OrdinalIgnoreCase) && state.UnlockedUntil.HasValue)
             {
                 var previousUntil = _unlockedUntil;
                 _unlockedUntil = state.UnlockedUntil.Value;
+                if (_unlockedUntil.Value <= DateTimeOffset.Now)
+                {
+                    StatusText.Text = "Session ended";
+                    TransitionToLocked(true);
+                    return;
+                }
                 if (!previousUntil.HasValue || _unlockedUntil.Value != previousUntil.Value)
                 {
                     _warningsFired.Clear();
@@ -114,10 +132,7 @@ namespace PcLocker
             Topmost = false;
             LockOverlay.Visibility = Visibility.Visible; // keep layout when showing again
             Hide();
-            if (!_countdownTimer.IsEnabled)
-            {
-                _countdownTimer.Start();
-            }
+            SyncCountdownTimer();
         }
 
         private void TransitionToLocked(bool enforceWorkstationLock)
@@ -142,6 +157,21 @@ namespace PcLocker
             LockOverlay.Visibility = Visibility.Visible;
             Activate();
             Focus();
+        }
+
+        private void SyncCountdownTimer()
+        {
+            if (_unlockedUntil.HasValue)
+            {
+                if (!_countdownTimer.IsEnabled)
+                {
+                    _countdownTimer.Start();
+                }
+            }
+            else if (_countdownTimer.IsEnabled)
+            {
+                _countdownTimer.Stop();
+            }
         }
 
         private void CountdownTick(object? sender, EventArgs e)
@@ -210,15 +240,25 @@ namespace PcLocker
 
         private void Window_Closing(object? sender, CancelEventArgs e)
         {
-#if !DEBUG
             if (!_allowClose)
             {
                 e.Cancel = true;
                 return;
             }
-#endif
             _cts.Cancel();
             _apiClient?.Dispose();
+        }
+
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (!_isLocked) return;
+
+            var isAltF4 = e.Key == Key.F4 && (Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt;
+            if (isAltF4)
+            {
+                e.Handled = true;
+                Logging.Write("Blocked Alt+F4 while locked");
+            }
         }
 
         protected override void OnClosed(EventArgs e)

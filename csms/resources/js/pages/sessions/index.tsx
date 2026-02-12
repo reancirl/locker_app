@@ -10,6 +10,7 @@ interface SessionItem {
     user_id?: number | null;
     started_at: string;
     ends_at: string;
+    is_open?: boolean;
     rate_type: string;
     rate_php: number;
     created_at: string;
@@ -46,7 +47,9 @@ export default function SessionsIndex({ sessions, now }: Props) {
         return () => clearInterval(id);
     }, []);
 
-    const activeSessions = sessions.filter((session) => new Date(session.ends_at).getTime() > nowMs);
+    const activeSessions = sessions.filter(
+        (session) => session.is_open || new Date(session.ends_at).getTime() > nowMs
+    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -98,6 +101,11 @@ export default function SessionsIndex({ sessions, now }: Props) {
                                     </td>
                                     <td className="px-4 py-3">
                                         <span className="capitalize">{session.rate_type}</span>
+                                        {session.is_open && (
+                                            <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                                Open
+                                            </span>
+                                        )}
                                         <span className="ml-1 font-semibold">· ₱{session.rate_php}</span>
                                     </td>
                                     <td className="px-4 py-3">
@@ -107,7 +115,7 @@ export default function SessionsIndex({ sessions, now }: Props) {
                                         </div>
                                     </td>
                                     <td className="px-4 py-3 text-right">
-                                        <EndSessionButton sessionId={session.id} endsAt={session.ends_at} />
+                                        <EndSessionButton sessionId={session.id} endsAt={session.ends_at} isOpen={!!session.is_open} />
                                     </td>
                                 </tr>
                                 );
@@ -120,9 +128,9 @@ export default function SessionsIndex({ sessions, now }: Props) {
     );
 }
 
-function EndSessionButton({ sessionId, endsAt }: { sessionId: number; endsAt: string }) {
+function EndSessionButton({ sessionId, endsAt, isOpen }: { sessionId: number; endsAt: string; isOpen: boolean }) {
     const form = useForm({});
-    const inFuture = new Date(endsAt).getTime() > Date.now();
+    const inFuture = isOpen || new Date(endsAt).getTime() > Date.now();
 
     if (!inFuture) {
         return <span className="text-xs text-neutral-500">Ended</span>;

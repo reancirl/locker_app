@@ -17,7 +17,10 @@ class SessionViewController extends Controller
         $now = Carbon::now('Asia/Manila');
 
         $sessions = CafeSession::with(['user:id,username,name', 'pc:id,device_id,name'])
-            ->where('ends_at', '>', $now)
+            ->where(function ($query) use ($now) {
+                $query->where('is_open', true)
+                    ->orWhere('ends_at', '>', $now);
+            })
             ->orderByDesc('started_at')
             ->get([
                 'id',
@@ -25,6 +28,7 @@ class SessionViewController extends Controller
                 'user_id',
                 'started_at',
                 'ends_at',
+                'is_open',
                 'rate_type',
                 'rate_php',
                 'created_at',
@@ -48,6 +52,7 @@ class SessionViewController extends Controller
     {
         $now = Carbon::now('Asia/Manila');
         $session->ends_at = $now;
+        $session->is_open = false;
         $session->save();
 
         $pc = Pc::firstOrCreate(['device_id' => $session->device_id]);

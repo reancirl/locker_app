@@ -11,6 +11,11 @@ interface Pc {
     unlocked_until?: string | null;
     last_seen_at?: string | null;
     created_at: string;
+    active_session?: {
+        is_open: boolean;
+        started_at?: string | null;
+        ends_at?: string | null;
+    } | null;
 }
 
 interface Props {
@@ -66,10 +71,10 @@ export default function PcIndex({ pcs }: Props) {
                                     <td className="px-4 py-3">{pc.name ?? '—'}</td>
                                     <td className="px-4 py-3 flex items-center gap-2">
                                         <Clock className="h-4 w-4 text-neutral-400" />
-                                        {pc.unlocked_until ?? 'Locked'}
+                                        {formatUnlockLabel(pc)}
                                     </td>
-                                    <td className="px-4 py-3">{pc.last_seen_at ?? '—'}</td>
-                                    <td className="px-4 py-3 text-neutral-500">{new Date(pc.created_at).toLocaleString()}</td>
+                                    <td className="px-4 py-3">{formatDateTime(pc.last_seen_at)}</td>
+                                    <td className="px-4 py-3 text-neutral-500">{formatDateTime(pc.created_at)}</td>
                                     <td className="px-4 py-3 text-right">
                                         <StartSessionForm pc={pc} />
                                     </td>
@@ -84,7 +89,10 @@ export default function PcIndex({ pcs }: Props) {
 }
 
 function StartSessionForm({ pc }: { pc: Pc }) {
-    const form = useForm<{ minutes: number }>({ minutes: pc.default_minutes ?? 60 });
+    const form = useForm<{ minutes: number; open: boolean }>({
+        minutes: pc.default_minutes ?? 60,
+        open: false,
+    });
 
     return (
         <form
@@ -102,15 +110,47 @@ function StartSessionForm({ pc }: { pc: Pc }) {
                 value={form.data.minutes}
                 onChange={(e) => form.setData('minutes', Number(e.target.value))}
                 title="Minutes"
+                disabled={form.data.open}
             />
+            <label className="inline-flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-300">
+                <input
+                    type="checkbox"
+                    checked={form.data.open}
+                    onChange={(e) => form.setData('open', e.target.checked)}
+                />
+                Open time
+            </label>
             <button
                 type="submit"
                 disabled={form.processing}
                 className="inline-flex items-center gap-1 rounded bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
             >
                 <Play className="h-3.5 w-3.5" />
-                {form.processing ? 'Starting…' : 'Start'}
+                {form.processing ? 'Starting…' : form.data.open ? 'Start Open' : 'Start'}
             </button>
         </form>
     );
+}
+
+function formatDateTime(iso?: string | null) {
+    if (!iso) return '—';
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return iso;
+    return date.toLocaleString('en-PH', {
+        timeZone: 'Asia/Manila',
+        hour12: false,
+    });
+}
+
+function formatUnlockLabel(pc: Pc) {
+    if (pc.active_session?.is_open) {
+        return 'Open time';
+    }
+    if (pc.active_session?.ends_at) {
+        return formatDateTime(pc.active_session.ends_at);
+    }
+    if (pc.unlocked_until) {
+        return formatDateTime(pc.unlocked_until);
+    }
+    return 'Locked';
 }

@@ -16,5 +16,8 @@ namespace PcLocker.Models
 
         [JsonPropertyName("warnings")]
         public int[]? Warnings { get; set; }
+
+        [JsonPropertyName("is_open")]
+        public bool IsOpen { get; set; }
     }
 }

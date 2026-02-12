@@ -20,31 +20,35 @@ class SessionController extends Controller
         $data = $request->validate([
             'device_id' => 'required|string',
             'minutes' => 'nullable|integer|min:1|max:480',
+            'open' => 'nullable|boolean',
         ]);
 
         $now = Carbon::now('Asia/Manila');
         $pc = Pc::firstOrCreate(['device_id' => $data['device_id']]);
 
-        $minutes = $data['minutes'] ?? $pc->default_minutes ?? $this->defaultMinutes;
-        $endsAt = $now->copy()->addMinutes($minutes);
+        $isOpen = (bool) ($data['open'] ?? false);
+        $minutes = $isOpen ? null : ($data['minutes'] ?? $pc->default_minutes ?? $this->defaultMinutes);
+        $endsAt = $isOpen ? $now : $now->copy()->addMinutes($minutes);
 
         $session = CafeSession::create([
             'device_id' => $pc->device_id,
             'user_id' => null,
             'started_at' => $now,
             'ends_at' => $endsAt,
+            'is_open' => $isOpen,
             'rate_type' => 'walkin',
             'rate_php' => $this->walkInRate,
         ]);
 
-        $pc->unlocked_until = $endsAt;
+        $pc->unlocked_until = $isOpen ? null : $endsAt;
         $pc->last_seen_at = $now;
         $pc->save();
 
         return response()->json([
             'ok' => true,
             'session_id' => $session->id,
-            'unlocked_until' => $endsAt->toIso8601String(),
+            'unlocked_until' => $isOpen ? null : $endsAt->toIso8601String(),
+            'is_open' => $isOpen,
         ]);
     }
 
@@ -52,31 +56,38 @@ class SessionController extends Controller
     {
         $data = $request->validate([
             'device_id' => 'required|string',
-            'minutes' => 'required|integer|min:1',
+            'minutes' => 'nullable|integer|min:1',
+            'open' => 'nullable|boolean',
         ]);
 
         $now = Carbon::now('Asia/Manila');
         $pc = Pc::firstOrCreate(['device_id' => $data['device_id']]);
 
-        $endsAt = $now->copy()->addMinutes($data['minutes']);
+        $isOpen = (bool) ($data['open'] ?? false);
+        if (!$isOpen && empty($data['minutes'])) {
+            return response()->json(['ok' => false, 'message' => 'Minutes is required unless open is true'], 422);
+        }
+        $endsAt = $isOpen ? $now : $now->copy()->addMinutes($data['minutes']);
 
         $session = CafeSession::create([
             'device_id' => $pc->device_id,
             'user_id' => null,
             'started_at' => $now,
             'ends_at' => $endsAt,
+            'is_open' => $isOpen,
             'rate_type' => 'walkin',
             'rate_php' => $this->walkInRate,
         ]);
 
-        $pc->unlocked_until = $endsAt;
+        $pc->unlocked_until = $isOpen ? null : $endsAt;
         $pc->last_seen_at = $now;
         $pc->save();
 
         return response()->json([
             'ok' => true,
             'session_id' => $session->id,
-            'unlocked_until' => $endsAt->toIso8601String(),
+            'unlocked_until' => $isOpen ? null : $endsAt->toIso8601String(),
+            'is_open' => $isOpen,
         ]);
     }
 
@@ -89,6 +100,7 @@ class SessionController extends Controller
         }
 
         $session->ends_at = $now;
+        $session->is_open = false;
         $session->save();
 
         $pc = Pc::firstOrCreate(['device_id' => $session->device_id]);

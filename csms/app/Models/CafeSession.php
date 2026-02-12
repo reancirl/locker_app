@@ -16,6 +16,7 @@ class CafeSession extends Model
         'user_id',
         'started_at',
         'ends_at',
+        'is_open',
         'rate_type',
         'rate_php',
     ];
@@ -23,6 +24,7 @@ class CafeSession extends Model
     protected $casts = [
         'started_at' => 'datetime',
         'ends_at' => 'datetime',
+        'is_open' => 'boolean',
     ];
 
     public function user()

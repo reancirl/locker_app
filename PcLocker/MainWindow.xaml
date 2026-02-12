@@ -10,6 +10,7 @@
         Background="#0F111A"
         Loaded="Window_Loaded"
         Deactivated="Window_Deactivated"
+        PreviewKeyDown="Window_PreviewKeyDown"
         Closing="Window_Closing">
     <Grid>
         <Grid.Background>
