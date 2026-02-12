@@ -63,7 +63,7 @@ class PcViewController extends Controller
         ]);
 
         $now = Carbon::now('Asia/Manila');
-        $isOpen = (bool) ($data['open'] ?? false);
+        $isOpen = filter_var($data['open'] ?? false, FILTER_VALIDATE_BOOLEAN);
         if (!$isOpen && empty($data['minutes'])) {
             return back()->withErrors(['minutes' => 'Minutes is required unless open time is selected.']);
         }

@@ -26,7 +26,7 @@ class SessionController extends Controller
         $now = Carbon::now('Asia/Manila');
         $pc = Pc::firstOrCreate(['device_id' => $data['device_id']]);
 
-        $isOpen = (bool) ($data['open'] ?? false);
+        $isOpen = filter_var($data['open'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $minutes = $isOpen ? null : ($data['minutes'] ?? $pc->default_minutes ?? $this->defaultMinutes);
         $endsAt = $isOpen ? $now : $now->copy()->addMinutes($minutes);
 
@@ -63,7 +63,7 @@ class SessionController extends Controller
         $now = Carbon::now('Asia/Manila');
         $pc = Pc::firstOrCreate(['device_id' => $data['device_id']]);
 
-        $isOpen = (bool) ($data['open'] ?? false);
+        $isOpen = filter_var($data['open'] ?? false, FILTER_VALIDATE_BOOLEAN);
         if (!$isOpen && empty($data['minutes'])) {
             return response()->json(['ok' => false, 'message' => 'Minutes is required unless open is true'], 422);
         }
