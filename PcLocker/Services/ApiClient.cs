@@ -40,6 +40,15 @@ namespace PcLocker
             return await JsonSerializer.DeserializeAsync<PcStateResponse>(stream, _jsonOptions, cancellationToken);
         }
 
+        public async Task<bool> AcknowledgeCommandAsync(string deviceId, int commandId, string status, string? message, CancellationToken cancellationToken)
+        {
+            var url = $"/api/pcs/{Uri.EscapeDataString(deviceId)}/commands/{commandId}/ack";
+            var payload = JsonSerializer.Serialize(new { status, message });
+            using var content = new StringContent(payload, Encoding.UTF8, "application/json");
+            using var response = await _client.PostAsync(url, content, cancellationToken);
+            return response.IsSuccessStatusCode;
+        }
+
         public void Dispose()
         {
             if (_disposed) return;

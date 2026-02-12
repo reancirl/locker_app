@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\CafeSession;
 use App\Models\Pc;
+use App\Models\PcCommand;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Carbon;
 
@@ -28,13 +29,25 @@ class PcController extends Controller
             ->orderByDesc('started_at')
             ->first();
 
+        $command = PcCommand::where('device_id', $deviceId)
+            ->whereNull('executed_at')
+            ->orderBy('created_at')
+            ->first();
+
         // If no active session, lock and clear cached unlock
         if (!$session) {
             if ($pc->unlocked_until) {
                 $pc->unlocked_until = null;
                 $pc->save();
             }
-            return response()->json(['mode' => 'locked']);
+            return response()->json([
+                'mode' => 'locked',
+                'command' => $command ? [
+                    'id' => $command->id,
+                    'action' => $command->command,
+                ] : null,
+                'is_open' => false,
+            ]);
         }
 
         if ($session->is_open) {
@@ -48,6 +61,10 @@ class PcController extends Controller
                 'unlocked_until' => null,
                 'warnings' => [],
                 'is_open' => true,
+                'command' => $command ? [
+                    'id' => $command->id,
+                    'action' => $command->command,
+                ] : null,
             ]);
         }
 
@@ -65,6 +82,10 @@ class PcController extends Controller
             'unlocked_until' => $unlockedUntil->toIso8601String(),
             'warnings' => $this->defaultWarnings,
             'is_open' => false,
+            'command' => $command ? [
+                'id' => $command->id,
+                'action' => $command->command,
+            ] : null,
         ]);
     }
 }

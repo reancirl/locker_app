@@ -11,6 +11,7 @@ interface SessionItem {
     started_at: string;
     ends_at: string;
     is_open?: boolean;
+    is_overdue?: boolean;
     rate_type: string;
     rate_php: number;
     created_at: string;
@@ -90,7 +91,11 @@ export default function SessionsIndex({ sessions, now }: Props) {
                                 return (
                                 <tr
                                     key={session.id}
-                                    className="border-t border-neutral-100 last:border-b dark:border-neutral-800"
+                                    className={`border-t border-neutral-100 last:border-b dark:border-neutral-800 ${
+                                        session.is_overdue
+                                            ? 'bg-red-50 text-red-900 dark:bg-red-950/40 dark:text-red-100'
+                                            : ''
+                                    }`}
                                 >
                                     <td className="px-4 py-3 flex items-center gap-2 font-semibold">
                                         <Monitor className="h-4 w-4 text-neutral-400" />

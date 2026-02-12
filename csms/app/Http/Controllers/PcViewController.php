@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Pc;
 use App\Models\CafeSession;
+use App\Models\PcCommand;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -15,6 +16,7 @@ class PcViewController extends Controller
     public function index(): Response
     {
         $now = Carbon::now('Asia/Manila');
+        $onlineThreshold = $now->copy()->subMinutes(5);
 
         $pcs = Pc::orderBy('device_id')
             ->get(['id', 'device_id', 'name', 'default_minutes', 'unlocked_until', 'last_seen_at', 'created_at']);
@@ -28,13 +30,20 @@ class PcViewController extends Controller
             ->unique('device_id')
             ->keyBy('device_id');
 
-        $pcs->transform(function ($pc) use ($activeSessions) {
+        $pcs->transform(function ($pc) use ($activeSessions, $now, $onlineThreshold) {
             $session = $activeSessions->get($pc->device_id);
+            $isOverdue = false;
+            if ($session && !$session->is_open && $session->ends_at && $session->ends_at->lte($now)) {
+                if ($pc->last_seen_at && $pc->last_seen_at->gte($onlineThreshold)) {
+                    $isOverdue = true;
+                }
+            }
             $pc->active_session = $session ? [
                 'is_open' => (bool) $session->is_open,
                 'started_at' => $session->started_at?->toIso8601String(),
                 'ends_at' => $session->ends_at?->toIso8601String(),
             ] : null;
+            $pc->is_overdue = $isOverdue;
             return $pc;
         });
 
@@ -88,5 +97,21 @@ class PcViewController extends Controller
             : "Session started for {$pc->device_id} until {$endsAt->toDateTimeString()}";
 
         return back()->with('success', $message);
+    }
+
+    public function sendCommand(Request $request, Pc $pc): RedirectResponse
+    {
+        $data = $request->validate([
+            'command' => 'required|string|in:shutdown,restart',
+        ]);
+
+        PcCommand::create([
+            'device_id' => $pc->device_id,
+            'requested_by' => $request->user()?->id,
+            'command' => $data['command'],
+        ]);
+
+        $label = $data['command'] === 'restart' ? 'Restart' : 'Shutdown';
+        return back()->with('success', "{$label} command queued for {$pc->device_id}.");
     }
 }

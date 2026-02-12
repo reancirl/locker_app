@@ -16,6 +16,7 @@ interface Pc {
         started_at?: string | null;
         ends_at?: string | null;
     } | null;
+    is_overdue?: boolean;
 }
 
 interface Props {
@@ -50,7 +51,6 @@ export default function PcIndex({ pcs }: Props) {
                                 <th className="px-4 py-3 font-medium">Name</th>
                                 <th className="px-4 py-3 font-medium">Unlocks Until</th>
                                 <th className="px-4 py-3 font-medium">Last Seen</th>
-                                <th className="px-4 py-3 font-medium">Created</th>
                                 <th className="px-4 py-3 font-medium text-right">Actions</th>
                             </tr>
                         </thead>
@@ -65,7 +65,11 @@ export default function PcIndex({ pcs }: Props) {
                             {pcs.map((pc) => (
                                 <tr
                                     key={pc.id}
-                                    className="border-t border-neutral-100 last:border-b dark:border-neutral-800"
+                                    className={`border-t border-neutral-100 last:border-b dark:border-neutral-800 ${
+                                        pc.is_overdue
+                                            ? 'bg-red-50 text-red-900 dark:bg-red-950/40 dark:text-red-100'
+                                            : ''
+                                    }`}
                                 >
                                     <td className="px-4 py-3 font-semibold">{pc.device_id}</td>
                                     <td className="px-4 py-3">{pc.name ?? '—'}</td>
@@ -74,9 +78,11 @@ export default function PcIndex({ pcs }: Props) {
                                         {formatUnlockLabel(pc)}
                                     </td>
                                     <td className="px-4 py-3">{formatDateTime(pc.last_seen_at)}</td>
-                                    <td className="px-4 py-3 text-neutral-500">{formatDateTime(pc.created_at)}</td>
                                     <td className="px-4 py-3 text-right">
-                                        <StartSessionForm pc={pc} />
+                                        <div className="flex flex-col items-end gap-2">
+                                            <StartSessionForm pc={pc} />
+                                            <PowerControls pc={pc} />
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -96,7 +102,7 @@ function StartSessionForm({ pc }: { pc: Pc }) {
 
     return (
         <form
-            className="flex items-center gap-2 justify-end"
+            className="flex flex-wrap items-center gap-2 justify-end"
             onSubmit={(e) => {
                 e.preventDefault();
                 form.post(`/pcs/${pc.id}/sessions/start`, { preserveScroll: true });
@@ -129,6 +135,40 @@ function StartSessionForm({ pc }: { pc: Pc }) {
                 {form.processing ? 'Starting…' : form.data.open ? 'Start Open' : 'Start'}
             </button>
         </form>
+    );
+}
+
+function PowerControls({ pc }: { pc: Pc }) {
+    const form = useForm<{ command: 'shutdown' | 'restart' }>({ command: 'shutdown' });
+
+    const submit = (command: 'shutdown' | 'restart') => {
+        const label = command === 'restart' ? 'Restart' : 'Shutdown';
+        if (!confirm(`${label} ${pc.device_id}?`)) return;
+        form.post(`/pcs/${pc.id}/command`, {
+            preserveScroll: true,
+            data: { command },
+        });
+    };
+
+    return (
+        <div className="flex items-center gap-2">
+            <button
+                type="button"
+                onClick={() => submit('shutdown')}
+                disabled={form.processing}
+                className="rounded border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-red-700 transition hover:bg-red-100 disabled:opacity-50 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-200"
+            >
+                Shutdown
+            </button>
+            <button
+                type="button"
+                onClick={() => submit('restart')}
+                disabled={form.processing}
+                className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-700 transition hover:bg-amber-100 disabled:opacity-50 dark:border-amber-900/40 dark:bg-amber-950/40 dark:text-amber-200"
+            >
+                Restart
+            </button>
+        </div>
     );
 }
 

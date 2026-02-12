@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,6 +23,7 @@ namespace PcLocker
         private readonly HashSet<int> _warningsFired = new();
         private bool _isLocked = true;
         private bool _allowClose;
+        private int? _lastCommandId;
 
         public MainWindow()
         {
@@ -97,6 +99,7 @@ namespace PcLocker
                 _warningsFired.Clear();
                 StatusText.Text = "Unlocked (open time)";
                 TransitionToUnlocked();
+                TriggerCommand(state.Command);
                 return;
             }
 
@@ -108,6 +111,7 @@ namespace PcLocker
                 {
                     StatusText.Text = "Session ended";
                     TransitionToLocked(true);
+                    TriggerCommand(state.Command);
                     return;
                 }
                 if (!previousUntil.HasValue || _unlockedUntil.Value != previousUntil.Value)
@@ -124,6 +128,8 @@ namespace PcLocker
                 StatusText.Text = "Locked";
                 TransitionToLocked(true);
             }
+
+            TriggerCommand(state.Command);
         }
 
         private void TransitionToUnlocked()
@@ -171,6 +177,67 @@ namespace PcLocker
             else if (_countdownTimer.IsEnabled)
             {
                 _countdownTimer.Stop();
+            }
+        }
+
+        private void TriggerCommand(PcCommandResponse? command)
+        {
+            if (command == null || _apiClient == null || _settings == null) return;
+            if (_lastCommandId == command.Id) return;
+
+            Task.Run(async () =>
+            {
+                var action = (command.Action ?? string.Empty).Trim().ToLowerInvariant();
+                if (action != "shutdown" && action != "restart")
+                {
+                    await TryAckCommand(command.Id, "rejected", "Unknown command");
+                    return;
+                }
+
+                var acked = await TryAckCommand(command.Id, "accepted", null);
+                if (!acked)
+                {
+                    Logging.Write($"Command ack failed for {command.Id}; will retry");
+                    return;
+                }
+
+                _lastCommandId = command.Id;
+                ExecuteSystemCommand(action);
+            });
+        }
+
+        private async Task<bool> TryAckCommand(int commandId, string status, string? message)
+        {
+            if (_apiClient == null || _settings == null) return false;
+            try
+            {
+                return await _apiClient.AcknowledgeCommandAsync(_settings.DeviceId, commandId, status, message, _cts.Token);
+            }
+            catch (Exception ex)
+            {
+                Logging.Write("Command ack failed", ex);
+                return false;
+            }
+        }
+
+        private void ExecuteSystemCommand(string action)
+        {
+            try
+            {
+                var args = action == "restart" ? "/r /t 0" : "/s /t 0";
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "shutdown.exe",
+                    Arguments = args,
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                };
+                Process.Start(psi);
+                Logging.Write($"Executed system command: {action}");
+            }
+            catch (Exception ex)
+            {
+                Logging.Write($"System command failed: {action}", ex);
             }
         }
 

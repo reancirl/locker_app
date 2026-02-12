@@ -19,5 +19,8 @@ namespace PcLocker.Models
 
         [JsonPropertyName("is_open")]
         public bool IsOpen { get; set; }
+
+        [JsonPropertyName("command")]
+        public PcCommandResponse? Command { get; set; }
     }
 }
