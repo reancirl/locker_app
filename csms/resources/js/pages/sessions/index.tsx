@@ -72,6 +72,8 @@ export default function SessionsIndex({ sessions, now }: Props) {
                             <tr className="text-xs font-semibold uppercase tracking-wide">
                                 <th className="px-4 py-3">PC</th>
                                 <th className="px-4 py-3">Rate</th>
+                                <th className="px-4 py-3">Type / Hours</th>
+                                <th className="px-4 py-3">Ends At</th>
                                 <th className="px-4 py-3">Used (mins) / ₱</th>
                                 <th className="px-4 py-3 text-right">Actions</th>
                             </tr>
@@ -112,6 +114,16 @@ export default function SessionsIndex({ sessions, now }: Props) {
                                             </span>
                                         )}
                                         <span className="ml-1 font-semibold">· ₱{session.rate_php}</span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        {session.is_open ? (
+                                            <span className="text-amber-700">Open time</span>
+                                        ) : (
+                                            <span>{formatHours(session.started_at, session.ends_at)} hrs</span>
+                                        )}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        {session.is_open ? '—' : formatDateTime(session.ends_at)}
                                     </td>
                                     <td className="px-4 py-3">
                                         {minutes} min
@@ -167,4 +179,22 @@ function formatMinutes(startIso: string, nowMs: number) {
 
 function formatCost(minutes: number, rate: number) {
     return ((minutes / 60) * rate).toFixed(2);
+}
+
+function formatHours(startIso: string, endIso: string) {
+    const startMs = new Date(startIso).getTime();
+    const endMs = new Date(endIso).getTime();
+    if (Number.isNaN(startMs) || Number.isNaN(endMs)) return '—';
+    const diffMs = Math.max(0, endMs - startMs);
+    return (diffMs / 3600000).toFixed(2);
+}
+
+function formatDateTime(iso?: string | null) {
+    if (!iso) return '—';
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return iso;
+    return date.toLocaleString('en-PH', {
+        timeZone: 'Asia/Manila',
+        hour12: false,
+    });
 }
