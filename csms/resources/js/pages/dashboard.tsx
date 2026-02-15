@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { Activity, Clock3, Monitor, PhilippinePeso, AlertTriangle, Server } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
@@ -17,8 +17,13 @@ interface DashboardProps {
         start: string;
         end: string;
     };
+    filter: {
+        start: string;
+        end: string;
+    };
     totals: {
         sales: number;
+        sales_today: number;
         sessions: number;
         avg_minutes: number;
         total_minutes: number;
@@ -46,9 +51,14 @@ interface DashboardProps {
     }>;
 }
 
-export default function Dashboard({ range, totals, counts, top_pcs, overdue_sessions }: DashboardProps) {
+export default function Dashboard({ range, filter, totals, counts, top_pcs, overdue_sessions }: DashboardProps) {
+    const form = useForm({
+        start: filter.start,
+        end: filter.end,
+    });
     const rangeLabel = formatRange(range.start, range.end);
     const salesLabel = formatCurrency(totals.sales);
+    const todaySalesLabel = formatCurrency(totals.sales_today);
     const avgLabel = formatDuration(totals.avg_minutes);
     const totalHoursLabel = formatHours(totals.total_minutes);
     return (
@@ -57,35 +67,68 @@ export default function Dashboard({ range, totals, counts, top_pcs, overdue_sess
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                        <h1 className="text-2xl font-semibold">Weekly Summary</h1>
+                        <h1 className="text-2xl font-semibold">Summary</h1>
                         <p className="text-sm text-neutral-500">{rangeLabel}</p>
                     </div>
-                    <div className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/40 dark:text-emerald-200">
-                        Sales This Week
-                    </div>
+                    <form
+                        className="flex flex-wrap items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-600 shadow-sm dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-300"
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            form.get('/dashboard', { preserveScroll: true });
+                        }}
+                    >
+                        <span className="font-semibold uppercase tracking-wide text-neutral-500">Range</span>
+                        <input
+                            type="date"
+                            value={form.data.start}
+                            onChange={(event) => form.setData('start', event.target.value)}
+                            className="rounded border border-neutral-200 bg-transparent px-2 py-1 text-xs dark:border-neutral-700"
+                        />
+                        <span className="text-neutral-400">to</span>
+                        <input
+                            type="date"
+                            value={form.data.end}
+                            onChange={(event) => form.setData('end', event.target.value)}
+                            className="rounded border border-neutral-200 bg-transparent px-2 py-1 text-xs dark:border-neutral-700"
+                        />
+                        <button
+                            type="submit"
+                            className="rounded bg-neutral-900 px-2 py-1 text-xs font-semibold text-white transition hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+                            disabled={form.processing}
+                        >
+                            {form.processing ? 'Loading…' : 'Apply'}
+                        </button>
+                    </form>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-4">
                     <SummaryCard
                         title="Total Sales"
                         value={salesLabel}
-                        sub="PHP, this week"
+                        sub="PHP, selected range"
                         icon={<PhilippinePeso className="h-5 w-5" />}
                         tone="emerald"
+                    />
+                    <SummaryCard
+                        title="Sales Today"
+                        value={todaySalesLabel}
+                        sub="PHP, today"
+                        icon={<PhilippinePeso className="h-5 w-5" />}
+                        tone="blue"
                     />
                     <SummaryCard
                         title="Total Sessions"
                         value={totals.sessions.toString()}
                         sub="Sessions started"
                         icon={<Activity className="h-5 w-5" />}
-                        tone="blue"
+                        tone="amber"
                     />
                     <SummaryCard
                         title="Avg Session Length"
                         value={avgLabel}
                         sub="Average time used"
                         icon={<Clock3 className="h-5 w-5" />}
-                        tone="amber"
+                        tone="emerald"
                     />
                 </div>
 
