@@ -60,6 +60,7 @@ export default function MoneyIndex({ date, totals }: Props) {
                     <table className="min-w-full text-sm">
                         <thead className="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500 dark:bg-neutral-900">
                             <tr>
+                                <th className="px-4 py-3">Date</th>
                                 <th className="px-4 py-3">PC Sales</th>
                                 <th className="px-4 py-3">Food Sales</th>
                                 <th className="px-4 py-3">Cash In</th>
@@ -71,6 +72,7 @@ export default function MoneyIndex({ date, totals }: Props) {
                         </thead>
                         <tbody>
                             <tr className="border-t border-neutral-100 dark:border-neutral-800">
+                                <td className="px-4 py-3 text-neutral-600 dark:text-neutral-300">{formatDate(date)}</td>
                                 <td className="px-4 py-3 font-semibold">{formatCurrency(totals.pc_sales)}</td>
                                 <td className="px-4 py-3 font-semibold">{formatCurrency(totals.food_sales)}</td>
                                 <td className="px-4 py-3">{formatCurrency(totals.cash_in)}</td>
@@ -93,4 +95,15 @@ function formatCurrency(value: number) {
         currency: 'PHP',
         maximumFractionDigits: 2,
     }).format(value);
+}
+
+function formatDate(value: string) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString('en-PH', {
+        timeZone: 'Asia/Manila',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    });
 }

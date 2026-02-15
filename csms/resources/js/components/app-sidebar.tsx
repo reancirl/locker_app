@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { BookOpen, Folder, LayoutGrid, Monitor, Clock3, Boxes, ShoppingCart, CircleDollarSign } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -54,6 +54,14 @@ const mainNavItems: NavItem[] = [
 const footerNavItems: NavItem[] = [];
 
 export function AppSidebar() {
+    const { authRole, authEmail } = usePage().props as { authRole?: string | null; authEmail?: string | null };
+    const isCashier =
+        authRole === 'cashier' || (authEmail && authEmail.toLowerCase() === 'cashier@bethelhub.com');
+
+    const filteredNavItems = isCashier
+        ? mainNavItems.filter((item) => ['/pcs', '/sessions', '/pos'].includes(String(item.href)))
+        : mainNavItems;
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -69,7 +77,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={filteredNavItems} />
             </SidebarContent>
 
             <SidebarFooter>

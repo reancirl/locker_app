@@ -19,10 +19,10 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth', 'verified', 'cashier.restrict'])
     ->name('dashboard');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'cashier.restrict'])->group(function () {
     Route::get('pcs', [PcViewController::class, 'index'])->name('pcs.index');
     Route::patch('pcs/{pc}/minutes', [PcViewController::class, 'updateMinutes'])->name('pcs.minutes');
     Route::post('pcs/{pc}/sessions/start', [PcViewController::class, 'startSession'])->name('pcs.sessions.start');
