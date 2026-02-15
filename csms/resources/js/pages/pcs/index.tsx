@@ -82,6 +82,7 @@ export default function PcIndex({ pcs }: Props) {
                                     <td className="px-4 py-3 text-right">
                                         <div className="flex flex-col items-end gap-2">
                                             <StartSessionForm pc={pc} />
+                                            <StartTestButton pc={pc} disabled={!!pc.has_uncleared_session} />
                                             <PowerControls pc={pc} />
                                         </div>
                                     </td>
@@ -144,6 +145,24 @@ function StartSessionForm({ pc }: { pc: Pc }) {
                 </span>
             )}
         </form>
+    );
+}
+
+function StartTestButton({ pc, disabled }: { pc: Pc; disabled: boolean }) {
+    const form = useForm({});
+
+    return (
+        <button
+            type="button"
+            disabled={form.processing || disabled}
+            onClick={() => {
+                if (!confirm(`Start test session for ${pc.device_id}?`)) return;
+                form.post(`/pcs/${pc.id}/sessions/test`, { preserveScroll: true });
+            }}
+            className="rounded border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-blue-700 transition hover:bg-blue-100 disabled:opacity-50 dark:border-blue-900/40 dark:bg-blue-950/40 dark:text-blue-200"
+        >
+            {form.processing ? 'Starting…' : 'Open Test'}
+        </button>
     );
 }
 

@@ -12,6 +12,7 @@ interface SessionItem {
     ends_at: string;
     is_open?: boolean;
     is_overdue?: boolean;
+    is_test?: boolean;
     rate_type: string;
     rate_php: number;
     created_at: string;
@@ -111,6 +112,11 @@ export default function SessionsIndex({ sessions, now }: Props) {
                                         {session.is_open && (
                                             <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
                                                 Open
+                                            </span>
+                                        )}
+                                        {session.is_test && (
+                                            <span className="ml-2 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-700">
+                                                Test
                                             </span>
                                         )}
                                         <span className="ml-1 font-semibold">· ₱{session.rate_php}</span>

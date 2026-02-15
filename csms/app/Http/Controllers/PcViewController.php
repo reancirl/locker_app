@@ -95,6 +95,7 @@ class PcViewController extends Controller
             'ends_at' => $endsAt,
             'is_open' => $isOpen,
             'cleared_at' => null,
+            'is_test' => false,
             'rate_type' => 'walkin',
             'rate_php' => 15,
         ]);
@@ -108,6 +109,36 @@ class PcViewController extends Controller
             : "Session started for {$pc->device_id} until {$endsAt->toDateTimeString()}";
 
         return back()->with('success', $message);
+    }
+
+    public function startTestSession(Request $request, Pc $pc): RedirectResponse
+    {
+        $hasUncleared = CafeSession::where('device_id', $pc->device_id)
+            ->whereNull('cleared_at')
+            ->exists();
+        if ($hasUncleared) {
+            return back()->withErrors(['minutes' => 'Previous session is not cleared yet.']);
+        }
+
+        $now = Carbon::now('Asia/Manila');
+
+        CafeSession::create([
+            'device_id' => $pc->device_id,
+            'user_id' => null,
+            'started_at' => $now,
+            'ends_at' => $now,
+            'is_open' => true,
+            'cleared_at' => null,
+            'is_test' => true,
+            'rate_type' => 'test',
+            'rate_php' => 0,
+        ]);
+
+        $pc->unlocked_until = null;
+        $pc->last_seen_at = $now;
+        $pc->save();
+
+        return back()->with('success', "Test session started for {$pc->device_id}.");
     }
 
     public function sendCommand(Request $request, Pc $pc): RedirectResponse

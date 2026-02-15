@@ -18,6 +18,7 @@ class CafeSession extends Model
         'ends_at',
         'is_open',
         'cleared_at',
+        'is_test',
         'rate_type',
         'rate_php',
     ];
@@ -27,6 +28,7 @@ class CafeSession extends Model
         'ends_at' => 'datetime',
         'is_open' => 'boolean',
         'cleared_at' => 'datetime',
+        'is_test' => 'boolean',
     ];
 
     public function user()

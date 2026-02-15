@@ -44,6 +44,7 @@ class SessionController extends Controller
             'ends_at' => $endsAt,
             'is_open' => $isOpen,
             'cleared_at' => null,
+            'is_test' => false,
             'rate_type' => 'walkin',
             'rate_php' => $this->walkInRate,
         ]);
@@ -91,6 +92,7 @@ class SessionController extends Controller
             'ends_at' => $endsAt,
             'is_open' => $isOpen,
             'cleared_at' => null,
+            'is_test' => false,
             'rate_type' => 'walkin',
             'rate_php' => $this->walkInRate,
         ]);

@@ -19,6 +19,7 @@ class DashboardController extends Controller
         [$rangeStart, $rangeEnd] = $this->resolveDateRange($request, $now);
 
         $sessionsForRevenue = CafeSession::with('pc:id,device_id,name')
+            ->where('is_test', false)
             ->where('started_at', '<=', $rangeEnd)
             ->where(function ($query) use ($rangeStart) {
                 $query->where('is_open', true)
@@ -28,7 +29,8 @@ class DashboardController extends Controller
 
         [$totalMinutes, $totalRevenue, $perPc] = $this->calculateRevenue($sessionsForRevenue, $rangeStart, $rangeEnd, $now);
 
-        $sessionsStartedInRange = CafeSession::where('started_at', '>=', $rangeStart)
+        $sessionsStartedInRange = CafeSession::where('is_test', false)
+            ->where('started_at', '>=', $rangeStart)
             ->where('started_at', '<=', $rangeEnd)
             ->get(['started_at', 'ends_at', 'is_open']);
 
@@ -75,6 +77,7 @@ class DashboardController extends Controller
         $todayStart = $now->copy()->startOfDay();
         $todayEnd = $now->copy();
         $sessionsForToday = CafeSession::with('pc:id,device_id,name')
+            ->where('is_test', false)
             ->where('started_at', '<=', $todayEnd)
             ->where(function ($query) use ($todayStart) {
                 $query->where('is_open', true)

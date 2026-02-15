@@ -37,6 +37,7 @@ class SessionViewController extends Controller
                 'started_at',
                 'ends_at',
                 'is_open',
+                'is_test',
                 'rate_type',
                 'rate_php',
                 'created_at',
