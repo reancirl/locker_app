@@ -15,16 +15,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $user = User::firstOrCreate(
-            ['username' => 'testuser'],
-            [
-                'name' => 'Test User',
-                'email' => 'testuser@example.com',
-                'password' => Hash::make('1234'),
-                'pin' => Hash::make('1234'),
-            ],
-        );
-
-        Pc::firstOrCreate(['device_id' => 'PC-01'], ['name' => 'Front PC', 'default_minutes' => 60]);
+        
     }
 }

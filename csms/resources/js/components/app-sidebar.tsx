@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Monitor, Clock3, Boxes } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Monitor, Clock3, Boxes, ShoppingCart, CircleDollarSign } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -37,20 +37,21 @@ const mainNavItems: NavItem[] = [
         href: '/products',
         icon: Boxes,
     },
+    {
+        title: 'POS',
+        href: '/pos',
+        icon: ShoppingCart,
+        target: '_blank',
+        rel: 'noopener',
+    },
+    {
+        title: 'Money',
+        href: '/money',
+        icon: CircleDollarSign,
+    },
 ];
 
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
-    },
-];
+const footerNavItems: NavItem[] = [];
 
 export function AppSidebar() {
     return (

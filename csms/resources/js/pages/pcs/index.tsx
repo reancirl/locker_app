@@ -80,10 +80,12 @@ export default function PcIndex({ pcs }: Props) {
                                     </td>
                                     <td className="px-4 py-3">{formatDateTime(pc.last_seen_at)}</td>
                                     <td className="px-4 py-3 text-right">
-                                        <div className="flex flex-col items-end gap-2">
+                                        <div className="flex w-full flex-col items-end gap-3">
                                             <StartSessionForm pc={pc} />
-                                            <StartTestButton pc={pc} disabled={!!pc.has_uncleared_session} />
-                                            <PowerControls pc={pc} />
+                                            <div className="flex w-full items-center justify-end gap-2">
+                                                <StartTestButton pc={pc} disabled={!!pc.has_uncleared_session} />
+                                                <PowerControls pc={pc} />
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>
@@ -105,42 +107,44 @@ function StartSessionForm({ pc }: { pc: Pc }) {
 
     return (
         <form
-            className="flex flex-wrap items-center gap-2 justify-end"
+            className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2"
             onSubmit={(e) => {
                 e.preventDefault();
                 if (isBlocked) return;
                 form.post(`/pcs/${pc.id}/sessions/start`, { preserveScroll: true });
             }}
         >
-            <input
-                type="number"
-                min={1}
-                max={480}
-                className="h-9 w-16 rounded border border-neutral-300 bg-transparent px-2 text-right text-sm dark:border-neutral-700"
-                value={form.data.minutes}
-                onChange={(e) => form.setData('minutes', Number(e.target.value))}
-                title="Minutes"
-                disabled={form.data.open || isBlocked}
-            />
-            <label className="inline-flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-300">
+            <div className="flex items-center justify-end gap-3">
                 <input
-                    type="checkbox"
-                    checked={form.data.open}
-                    onChange={(e) => form.setData('open', e.target.checked)}
-                    disabled={isBlocked}
+                    type="number"
+                    min={1}
+                    max={480}
+                    className="h-9 w-16 rounded border border-neutral-300 bg-transparent px-2 text-right text-sm dark:border-neutral-700"
+                    value={form.data.minutes}
+                    onChange={(e) => form.setData('minutes', Number(e.target.value))}
+                    title="Minutes"
+                    disabled={form.data.open || isBlocked}
                 />
-                Open time
-            </label>
+                <label className="inline-flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-300">
+                    <input
+                        type="checkbox"
+                        checked={form.data.open}
+                        onChange={(e) => form.setData('open', e.target.checked)}
+                        disabled={isBlocked}
+                    />
+                    Open time
+                </label>
+            </div>
             <button
                 type="submit"
                 disabled={form.processing || isBlocked}
-                className="inline-flex items-center gap-1 rounded bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
             >
                 <Play className="h-3.5 w-3.5" />
                 {isBlocked ? 'Clear First' : form.processing ? 'Starting…' : form.data.open ? 'Start Open' : 'Start'}
             </button>
             {isBlocked && (
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-red-600">
+                <span className="col-span-2 text-right text-[10px] font-semibold uppercase tracking-wide text-red-600">
                     Session not cleared
                 </span>
             )}
@@ -159,7 +163,7 @@ function StartTestButton({ pc, disabled }: { pc: Pc; disabled: boolean }) {
                 if (!confirm(`Start test session for ${pc.device_id}?`)) return;
                 form.post(`/pcs/${pc.id}/sessions/test`, { preserveScroll: true });
             }}
-            className="rounded border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-blue-700 transition hover:bg-blue-100 disabled:opacity-50 dark:border-blue-900/40 dark:bg-blue-950/40 dark:text-blue-200"
+            className="rounded border border-blue-200 bg-blue-50 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-blue-700 transition hover:bg-blue-100 disabled:opacity-50 dark:border-blue-900/40 dark:bg-blue-950/40 dark:text-blue-200"
         >
             {form.processing ? 'Starting…' : 'Open Test'}
         </button>
@@ -182,7 +186,7 @@ function PowerControls({ pc }: { pc: Pc }) {
                 type="button"
                 onClick={() => submit('shutdown')}
                 disabled={form.processing}
-                className="rounded border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-red-700 transition hover:bg-red-100 disabled:opacity-50 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-200"
+                className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-red-700 transition hover:bg-red-100 disabled:opacity-50 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-200"
             >
                 Shutdown
             </button>
@@ -190,7 +194,7 @@ function PowerControls({ pc }: { pc: Pc }) {
                 type="button"
                 onClick={() => submit('restart')}
                 disabled={form.processing}
-                className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-amber-700 transition hover:bg-amber-100 disabled:opacity-50 dark:border-amber-900/40 dark:bg-amber-950/40 dark:text-amber-200"
+                className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-amber-700 transition hover:bg-amber-100 disabled:opacity-50 dark:border-amber-900/40 dark:bg-amber-950/40 dark:text-amber-200"
             >
                 Restart
             </button>

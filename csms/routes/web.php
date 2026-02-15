@@ -7,6 +7,10 @@ use App\Http\Controllers\PcViewController;
 use App\Http\Controllers\SessionViewController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\PosController;
+use App\Http\Controllers\PosSaleController;
+use App\Http\Controllers\CashMovementController;
+use App\Http\Controllers\MoneyController;
 
 Route::get('/', function () {
     return Inertia::render('welcome', [
@@ -30,6 +34,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('products', [ProductController::class, 'index'])->name('products.index');
     Route::post('products', [ProductController::class, 'store'])->name('products.store');
     Route::patch('products/{product}/inventory', [ProductController::class, 'updateInventory'])->name('products.inventory');
+    Route::get('pos', [PosController::class, 'index'])->name('pos.index');
+    Route::post('pos/sales', [PosSaleController::class, 'store'])->name('pos.sales.store');
+    Route::post('pos/cash-movements', [CashMovementController::class, 'store'])->name('pos.cash.store');
+    Route::get('money', [MoneyController::class, 'index'])->name('money.index');
 });
 
 require __DIR__.'/settings.php';
