@@ -21,6 +21,7 @@ class PcController extends Controller
         $pc->save();
 
         $session = CafeSession::where('device_id', $deviceId)
+            ->whereNull('cleared_at')
             ->where(function ($query) use ($now) {
                 $query->where('is_open', true)
                     ->orWhere('ends_at', '>', $now); // strictly in the future

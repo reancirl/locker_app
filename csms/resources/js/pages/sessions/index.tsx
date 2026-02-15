@@ -132,7 +132,15 @@ export default function SessionsIndex({ sessions, now }: Props) {
                                         </div>
                                     </td>
                                     <td className="px-4 py-3 text-right">
-                                        <EndSessionButton sessionId={session.id} endsAt={session.ends_at} isOpen={!!session.is_open} />
+                                        {session.is_overdue ? (
+                                            <ClearSessionButton sessionId={session.id} />
+                                        ) : (
+                                            <EndSessionButton
+                                                sessionId={session.id}
+                                                endsAt={session.ends_at}
+                                                isOpen={!!session.is_open}
+                                            />
+                                        )}
                                     </td>
                                 </tr>
                                 );
@@ -166,6 +174,27 @@ function EndSessionButton({ sessionId, endsAt, isOpen }: { sessionId: number; en
                 className="rounded bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
             >
                 {form.processing ? 'Ending…' : 'End Now'}
+            </button>
+        </form>
+    );
+}
+
+function ClearSessionButton({ sessionId }: { sessionId: number }) {
+    const form = useForm({});
+
+    return (
+        <form
+            onSubmit={(e) => {
+                e.preventDefault();
+                form.post(`/sessions/${sessionId}/clear`, { preserveScroll: true });
+            }}
+        >
+            <button
+                type="submit"
+                disabled={form.processing}
+                className="rounded bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:opacity-50"
+            >
+                {form.processing ? 'Clearing…' : 'Clear'}
             </button>
         </form>
     );

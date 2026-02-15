@@ -26,6 +26,13 @@ class SessionController extends Controller
         $now = Carbon::now('Asia/Manila');
         $pc = Pc::firstOrCreate(['device_id' => $data['device_id']]);
 
+        $hasUncleared = CafeSession::where('device_id', $pc->device_id)
+            ->whereNull('cleared_at')
+            ->exists();
+        if ($hasUncleared) {
+            return response()->json(['ok' => false, 'message' => 'Previous session not cleared'], 409);
+        }
+
         $isOpen = filter_var($data['open'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $minutes = $isOpen ? null : ($data['minutes'] ?? $pc->default_minutes ?? $this->defaultMinutes);
         $endsAt = $isOpen ? $now : $now->copy()->addMinutes($minutes);
@@ -36,6 +43,7 @@ class SessionController extends Controller
             'started_at' => $now,
             'ends_at' => $endsAt,
             'is_open' => $isOpen,
+            'cleared_at' => null,
             'rate_type' => 'walkin',
             'rate_php' => $this->walkInRate,
         ]);
@@ -63,6 +71,13 @@ class SessionController extends Controller
         $now = Carbon::now('Asia/Manila');
         $pc = Pc::firstOrCreate(['device_id' => $data['device_id']]);
 
+        $hasUncleared = CafeSession::where('device_id', $pc->device_id)
+            ->whereNull('cleared_at')
+            ->exists();
+        if ($hasUncleared) {
+            return response()->json(['ok' => false, 'message' => 'Previous session not cleared'], 409);
+        }
+
         $isOpen = filter_var($data['open'] ?? false, FILTER_VALIDATE_BOOLEAN);
         if (!$isOpen && empty($data['minutes'])) {
             return response()->json(['ok' => false, 'message' => 'Minutes is required unless open is true'], 422);
@@ -75,6 +90,7 @@ class SessionController extends Controller
             'started_at' => $now,
             'ends_at' => $endsAt,
             'is_open' => $isOpen,
+            'cleared_at' => null,
             'rate_type' => 'walkin',
             'rate_php' => $this->walkInRate,
         ]);
@@ -101,6 +117,7 @@ class SessionController extends Controller
 
         $session->ends_at = $now;
         $session->is_open = false;
+        $session->cleared_at = $now;
         $session->save();
 
         $pc = Pc::firstOrCreate(['device_id' => $session->device_id]);

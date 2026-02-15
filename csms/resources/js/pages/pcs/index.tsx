@@ -17,6 +17,7 @@ interface Pc {
         ends_at?: string | null;
     } | null;
     is_overdue?: boolean;
+    has_uncleared_session?: boolean;
 }
 
 interface Props {
@@ -99,12 +100,14 @@ function StartSessionForm({ pc }: { pc: Pc }) {
         minutes: pc.default_minutes ?? 60,
         open: false,
     });
+    const isBlocked = !!pc.has_uncleared_session;
 
     return (
         <form
             className="flex flex-wrap items-center gap-2 justify-end"
             onSubmit={(e) => {
                 e.preventDefault();
+                if (isBlocked) return;
                 form.post(`/pcs/${pc.id}/sessions/start`, { preserveScroll: true });
             }}
         >
@@ -116,24 +119,30 @@ function StartSessionForm({ pc }: { pc: Pc }) {
                 value={form.data.minutes}
                 onChange={(e) => form.setData('minutes', Number(e.target.value))}
                 title="Minutes"
-                disabled={form.data.open}
+                disabled={form.data.open || isBlocked}
             />
             <label className="inline-flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-300">
                 <input
                     type="checkbox"
                     checked={form.data.open}
                     onChange={(e) => form.setData('open', e.target.checked)}
+                    disabled={isBlocked}
                 />
                 Open time
             </label>
             <button
                 type="submit"
-                disabled={form.processing}
+                disabled={form.processing || isBlocked}
                 className="inline-flex items-center gap-1 rounded bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
             >
                 <Play className="h-3.5 w-3.5" />
-                {form.processing ? 'Starting…' : form.data.open ? 'Start Open' : 'Start'}
+                {isBlocked ? 'Clear First' : form.processing ? 'Starting…' : form.data.open ? 'Start Open' : 'Start'}
             </button>
+            {isBlocked && (
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-red-600">
+                    Session not cleared
+                </span>
+            )}
         </form>
     );
 }
@@ -144,10 +153,8 @@ function PowerControls({ pc }: { pc: Pc }) {
     const submit = (command: 'shutdown' | 'restart') => {
         const label = command === 'restart' ? 'Restart' : 'Shutdown';
         if (!confirm(`${label} ${pc.device_id}?`)) return;
-        form.post(`/pcs/${pc.id}/command`, {
-            preserveScroll: true,
-            data: { command },
-        });
+        form.setData('command', command);
+        form.post(`/pcs/${pc.id}/command`, { preserveScroll: true });
     };
 
     return (

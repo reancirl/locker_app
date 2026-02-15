@@ -21,16 +21,18 @@ class PcViewController extends Controller
         $pcs = Pc::orderBy('device_id')
             ->get(['id', 'device_id', 'name', 'default_minutes', 'unlocked_until', 'last_seen_at', 'created_at']);
 
-        $activeSessions = CafeSession::where(function ($query) use ($now) {
-                $query->where('is_open', true)
-                    ->orWhere('ends_at', '>', $now);
-            })
+        $activeSessions = CafeSession::whereNull('cleared_at')
             ->orderByDesc('started_at')
             ->get(['device_id', 'started_at', 'ends_at', 'is_open'])
             ->unique('device_id')
             ->keyBy('device_id');
 
-        $pcs->transform(function ($pc) use ($activeSessions, $now, $onlineThreshold) {
+        $unclearedDevices = CafeSession::whereNull('cleared_at')
+            ->distinct()
+            ->pluck('device_id')
+            ->all();
+
+        $pcs->transform(function ($pc) use ($activeSessions, $now, $onlineThreshold, $unclearedDevices) {
             $session = $activeSessions->get($pc->device_id);
             $isOverdue = false;
             if ($session && !$session->is_open && $session->ends_at && $session->ends_at->lte($now)) {
@@ -44,6 +46,7 @@ class PcViewController extends Controller
                 'ends_at' => $session->ends_at?->toIso8601String(),
             ] : null;
             $pc->is_overdue = $isOverdue;
+            $pc->has_uncleared_session = in_array($pc->device_id, $unclearedDevices, true);
             return $pc;
         });
 
@@ -71,6 +74,13 @@ class PcViewController extends Controller
             'open' => 'nullable|boolean',
         ]);
 
+        $hasUncleared = CafeSession::where('device_id', $pc->device_id)
+            ->whereNull('cleared_at')
+            ->exists();
+        if ($hasUncleared) {
+            return back()->withErrors(['minutes' => 'Previous session is not cleared yet.']);
+        }
+
         $now = Carbon::now('Asia/Manila');
         $isOpen = filter_var($data['open'] ?? false, FILTER_VALIDATE_BOOLEAN);
         if (!$isOpen && empty($data['minutes'])) {
@@ -84,6 +94,7 @@ class PcViewController extends Controller
             'started_at' => $now,
             'ends_at' => $endsAt,
             'is_open' => $isOpen,
+            'cleared_at' => null,
             'rate_type' => 'walkin',
             'rate_php' => 15,
         ]);

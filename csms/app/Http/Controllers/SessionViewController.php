@@ -18,6 +18,7 @@ class SessionViewController extends Controller
         $onlineThreshold = $now->copy()->subMinutes(5);
 
         $sessions = CafeSession::with(['user:id,username,name', 'pc:id,device_id,name,last_seen_at'])
+            ->whereNull('cleared_at')
             ->where(function ($query) use ($now, $onlineThreshold) {
                 $query->where('is_open', true)
                     ->orWhere('ends_at', '>', $now)
@@ -67,6 +68,7 @@ class SessionViewController extends Controller
         $now = Carbon::now('Asia/Manila');
         $session->ends_at = $now;
         $session->is_open = false;
+        $session->cleared_at = $now;
         $session->save();
 
         $pc = Pc::firstOrCreate(['device_id' => $session->device_id]);
@@ -75,5 +77,18 @@ class SessionViewController extends Controller
         $pc->save();
 
         return back()->with('success', 'Session ended.');
+    }
+
+    public function clear(Request $request, CafeSession $session): RedirectResponse
+    {
+        $now = Carbon::now('Asia/Manila');
+        if ($session->is_open || ($session->ends_at && $session->ends_at->gt($now))) {
+            return back()->withErrors(['session' => 'Session is still active and cannot be cleared.']);
+        }
+
+        $session->cleared_at = $now;
+        $session->save();
+
+        return back()->with('success', 'Session cleared.');
     }
 }
