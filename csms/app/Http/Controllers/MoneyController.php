@@ -15,9 +15,7 @@ class MoneyController extends Controller
     public function index(Request $request): Response
     {
         $now = Carbon::now('Asia/Manila');
-        $date = $this->resolveDate($request, $now);
-        $rangeStart = $date->copy()->startOfDay();
-        $rangeEnd = $date->copy()->endOfDay();
+        [$rangeStart, $rangeEnd] = $this->resolveDateRange($request, $now);
 
         $sessions = CafeSession::with('pc:id,device_id,name')
             ->where('is_test', false)
@@ -28,49 +26,83 @@ class MoneyController extends Controller
             })
             ->get(['id', 'device_id', 'started_at', 'ends_at', 'is_open', 'rate_php']);
 
-        [, $pcRevenue] = $this->calculateRevenue($sessions, $rangeStart, $rangeEnd, $now);
+        $rows = [];
+        $cursor = $rangeStart->copy()->startOfDay();
+        $lastDay = $rangeEnd->copy()->startOfDay();
 
-        $posRevenue = (float) PosSale::whereBetween('created_at', [$rangeStart, $rangeEnd])->sum('total');
+        while ($cursor->lte($lastDay)) {
+            $dayStart = $cursor->copy()->startOfDay();
+            $dayEnd = $cursor->isSameDay($now) ? $now->copy() : $cursor->copy()->endOfDay();
+            if ($dayEnd->gt($rangeEnd)) {
+                $dayEnd = $rangeEnd->copy();
+            }
 
-        $cashIn = (float) CashMovement::whereBetween('created_at', [$rangeStart, $rangeEnd])
-            ->where('type', 'cash_in')
-            ->sum('amount');
-        $cashOut = (float) CashMovement::whereBetween('created_at', [$rangeStart, $rangeEnd])
-            ->where('type', 'cash_out')
-            ->sum('amount');
-        $remittance = (float) CashMovement::whereBetween('created_at', [$rangeStart, $rangeEnd])
-            ->where('type', 'remittance')
-            ->sum('amount');
+            [, $pcRevenue] = $this->calculateRevenue($sessions, $dayStart, $dayEnd, $now);
+            $posRevenue = (float) PosSale::whereBetween('created_at', [$dayStart, $dayEnd])->sum('total');
 
-        $totalSales = $pcRevenue + $posRevenue;
-        $totalCash = $totalSales + $cashIn - $cashOut - $remittance;
+            $cashIn = (float) CashMovement::whereBetween('created_at', [$dayStart, $dayEnd])
+                ->where('type', 'cash_in')
+                ->sum('amount');
+            $cashOut = (float) CashMovement::whereBetween('created_at', [$dayStart, $dayEnd])
+                ->where('type', 'cash_out')
+                ->sum('amount');
+            $remittance = (float) CashMovement::whereBetween('created_at', [$dayStart, $dayEnd])
+                ->where('type', 'remittance')
+                ->sum('amount');
 
-        return Inertia::render('money/index', [
-            'date' => $date->toDateString(),
-            'totals' => [
+            $totalSales = $pcRevenue + $posRevenue;
+            $totalCash = $totalSales + $cashIn - $cashOut - $remittance;
+
+            $rows[] = [
+                'date' => $dayStart->toDateString(),
                 'pc_sales' => round($pcRevenue, 2),
                 'food_sales' => round($posRevenue, 2),
-                'total_sales' => round($totalSales, 2),
                 'cash_in' => round($cashIn, 2),
                 'cash_out' => round($cashOut, 2),
+                'total_sales' => round($totalSales, 2),
                 'remittance' => round($remittance, 2),
                 'total_cash' => round($totalCash, 2),
+            ];
+
+            $cursor->addDay();
+        }
+
+        return Inertia::render('money/index', [
+            'range' => [
+                'start' => $rangeStart->toDateString(),
+                'end' => $rangeEnd->toDateString(),
             ],
+            'rows' => $rows,
         ]);
     }
 
-    private function resolveDate(Request $request, Carbon $now): Carbon
+    private function resolveDateRange(Request $request, Carbon $now): array
     {
-        $date = $request->query('date');
-        if ($date) {
+        $start = $request->query('start');
+        $end = $request->query('end');
+
+        if ($start || $end) {
             try {
-                return Carbon::parse($date, 'Asia/Manila');
+                $parsedStart = $start ? Carbon::parse($start, 'Asia/Manila')->startOfDay() : $now->copy()->startOfWeek(Carbon::MONDAY);
+                $parsedEnd = $end ? Carbon::parse($end, 'Asia/Manila')->endOfDay() : $now->copy()->endOfDay();
             } catch (\Exception $e) {
-                return $now->copy();
+                $parsedStart = $now->copy()->startOfWeek(Carbon::MONDAY);
+                $parsedEnd = $now->copy()->endOfDay();
             }
+        } else {
+            $parsedStart = $now->copy()->startOfWeek(Carbon::MONDAY);
+            $parsedEnd = $now->copy()->endOfDay();
         }
 
-        return $now->copy();
+        if ($parsedEnd->lessThan($parsedStart)) {
+            [$parsedStart, $parsedEnd] = [$parsedEnd->copy()->startOfDay(), $parsedStart->copy()->endOfDay()];
+        }
+
+        if ($parsedEnd->greaterThan($now)) {
+            $parsedEnd = $now->copy();
+        }
+
+        return [$parsedStart, $parsedEnd];
     }
 
     private function calculateRevenue($sessions, Carbon $rangeStart, Carbon $rangeEnd, Carbon $now): array

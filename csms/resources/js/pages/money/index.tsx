@@ -2,17 +2,23 @@ import { Head, useForm } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
-interface Props {
+interface MoneyRow {
     date: string;
-    totals: {
-        pc_sales: number;
-        food_sales: number;
-        cash_in: number;
-        cash_out: number;
-        total_sales: number;
-        remittance: number;
-        total_cash: number;
+    pc_sales: number;
+    food_sales: number;
+    cash_in: number;
+    cash_out: number;
+    total_sales: number;
+    remittance: number;
+    total_cash: number;
+}
+
+interface Props {
+    range: {
+        start: string;
+        end: string;
     };
+    rows: MoneyRow[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -20,8 +26,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Money', href: '/money' },
 ];
 
-export default function MoneyIndex({ date, totals }: Props) {
-    const form = useForm({ date });
+export default function MoneyIndex({ range, rows }: Props) {
+    const form = useForm({
+        start: range.start,
+        end: range.end,
+    });
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -30,20 +39,27 @@ export default function MoneyIndex({ date, totals }: Props) {
                 <header className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-semibold">Money Monitoring</h1>
-                        <p className="text-sm text-neutral-500">Daily Summary</p>
+                        <p className="text-sm text-neutral-500">Daily summary by date range</p>
                     </div>
                     <form
-                        className="flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-600 shadow-sm dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-300"
+                        className="flex flex-wrap items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-600 shadow-sm dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-300"
                         onSubmit={(event) => {
                             event.preventDefault();
                             form.get('/money', { preserveScroll: true });
                         }}
                     >
-                        <span className="font-semibold uppercase tracking-wide text-neutral-500">Date</span>
+                        <span className="font-semibold uppercase tracking-wide text-neutral-500">From</span>
                         <input
                             type="date"
-                            value={form.data.date}
-                            onChange={(event) => form.setData('date', event.target.value)}
+                            value={form.data.start}
+                            onChange={(event) => form.setData('start', event.target.value)}
+                            className="rounded border border-neutral-200 bg-transparent px-2 py-1 text-xs dark:border-neutral-700"
+                        />
+                        <span className="text-neutral-400">to</span>
+                        <input
+                            type="date"
+                            value={form.data.end}
+                            onChange={(event) => form.setData('end', event.target.value)}
                             className="rounded border border-neutral-200 bg-transparent px-2 py-1 text-xs dark:border-neutral-700"
                         />
                         <button
@@ -71,16 +87,25 @@ export default function MoneyIndex({ date, totals }: Props) {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr className="border-t border-neutral-100 dark:border-neutral-800">
-                                <td className="px-4 py-3 text-neutral-600 dark:text-neutral-300">{formatDate(date)}</td>
-                                <td className="px-4 py-3 font-semibold">{formatCurrency(totals.pc_sales)}</td>
-                                <td className="px-4 py-3 font-semibold">{formatCurrency(totals.food_sales)}</td>
-                                <td className="px-4 py-3">{formatCurrency(totals.cash_in)}</td>
-                                <td className="px-4 py-3">{formatCurrency(totals.cash_out)}</td>
-                                <td className="px-4 py-3 font-semibold">{formatCurrency(totals.total_sales)}</td>
-                                <td className="px-4 py-3">{formatCurrency(totals.remittance)}</td>
-                                <td className="px-4 py-3 text-right text-lg font-semibold">{formatCurrency(totals.total_cash)}</td>
-                            </tr>
+                            {rows.length === 0 && (
+                                <tr>
+                                    <td className="px-4 py-6 text-center text-neutral-500" colSpan={8}>
+                                        No data for this range.
+                                    </td>
+                                </tr>
+                            )}
+                            {rows.map((row) => (
+                                <tr key={row.date} className="border-t border-neutral-100 dark:border-neutral-800">
+                                    <td className="px-4 py-3 text-neutral-600 dark:text-neutral-300">{formatDate(row.date)}</td>
+                                    <td className="px-4 py-3 font-semibold">{formatCurrency(row.pc_sales)}</td>
+                                    <td className="px-4 py-3 font-semibold">{formatCurrency(row.food_sales)}</td>
+                                    <td className="px-4 py-3">{formatCurrency(row.cash_in)}</td>
+                                    <td className="px-4 py-3">{formatCurrency(row.cash_out)}</td>
+                                    <td className="px-4 py-3 font-semibold">{formatCurrency(row.total_sales)}</td>
+                                    <td className="px-4 py-3">{formatCurrency(row.remittance)}</td>
+                                    <td className="px-4 py-3 text-right text-lg font-semibold">{formatCurrency(row.total_cash)}</td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>
