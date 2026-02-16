@@ -19,15 +19,10 @@ class SessionViewController extends Controller
 
         $sessions = CafeSession::with(['user:id,username,name', 'pc:id,device_id,name,last_seen_at'])
             ->whereNull('cleared_at')
-            ->where(function ($query) use ($now, $onlineThreshold) {
+            ->where(function ($query) use ($now) {
                 $query->where('is_open', true)
                     ->orWhere('ends_at', '>', $now)
-                    ->orWhere(function ($sub) use ($now, $onlineThreshold) {
-                        $sub->where('ends_at', '<=', $now)
-                            ->whereHas('pc', function ($pcQuery) use ($onlineThreshold) {
-                                $pcQuery->where('last_seen_at', '>=', $onlineThreshold);
-                            });
-                    });
+                    ->orWhere('ends_at', '<=', $now);
             })
             ->orderByDesc('started_at')
             ->get([
@@ -55,6 +50,9 @@ class SessionViewController extends Controller
                         $session->is_overdue = true;
                     }
                 }
+                $session->remaining_minutes = $session->is_open || !$session->ends_at
+                    ? null
+                    : max(0, $now->diffInMinutes($session->ends_at, false));
                 return $session;
             });
 
@@ -69,7 +67,6 @@ class SessionViewController extends Controller
         $now = Carbon::now('Asia/Manila');
         $session->ends_at = $now;
         $session->is_open = false;
-        $session->cleared_at = $now;
         $session->save();
 
         $pc = Pc::firstOrCreate(['device_id' => $session->device_id]);

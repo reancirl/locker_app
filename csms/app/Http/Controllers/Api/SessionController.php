@@ -119,7 +119,6 @@ class SessionController extends Controller
 
         $session->ends_at = $now;
         $session->is_open = false;
-        $session->cleared_at = $now;
         $session->save();
 
         $pc = Pc::firstOrCreate(['device_id' => $session->device_id]);

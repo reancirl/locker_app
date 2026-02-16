@@ -13,6 +13,7 @@ interface SessionItem {
     is_open?: boolean;
     is_overdue?: boolean;
     is_test?: boolean;
+    remaining_minutes?: number | null;
     rate_type: string;
     rate_php: number;
     created_at: string;
@@ -75,6 +76,7 @@ export default function SessionsIndex({ sessions, now }: Props) {
                                 <th className="px-4 py-3">Rate</th>
                                 <th className="px-4 py-3">Type / Hours</th>
                                 <th className="px-4 py-3">Ends At</th>
+                                <th className="px-4 py-3">Remaining (mins)</th>
                                 <th className="px-4 py-3">Used (mins) / ₱</th>
                                 <th className="px-4 py-3 text-right">Actions</th>
                             </tr>
@@ -130,6 +132,9 @@ export default function SessionsIndex({ sessions, now }: Props) {
                                     </td>
                                     <td className="px-4 py-3">
                                         {session.is_open ? '—' : formatDateTime(session.ends_at)}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        {session.is_open ? 'Open' : session.remaining_minutes ?? 0}
                                     </td>
                                     <td className="px-4 py-3">
                                         {minutes} min
