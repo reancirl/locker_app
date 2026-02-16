@@ -50,21 +50,17 @@ export default function SessionsIndex({ sessions, now }: Props) {
         return () => clearInterval(id);
     }, []);
 
-    const activeSessions = sessions.filter(
-        (session) => session.is_open || new Date(session.ends_at).getTime() > nowMs
-    );
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Active Sessions" />
+            <Head title="Sessions" />
             <div className="flex flex-col gap-4 p-4">
                 <header className="flex items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 dark:bg-neutral-900 dark:text-emerald-300">
                         <Clock3 className="h-5 w-5" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-semibold">Active Sessions</h1>
-                        <p className="text-sm text-neutral-500">Currently running sessions only</p>
+                        <h1 className="text-2xl font-semibold">Sessions</h1>
+                        <p className="text-sm text-neutral-500">All uncleared sessions</p>
                     </div>
                 </header>
 
@@ -82,14 +78,14 @@ export default function SessionsIndex({ sessions, now }: Props) {
                             </tr>
                         </thead>
                         <tbody>
-                            {activeSessions.length === 0 && (
+                            {sessions.length === 0 && (
                                 <tr>
                                     <td className="px-4 py-8 text-center text-neutral-500" colSpan={7}>
-                                        No active sessions.
+                                        No sessions found.
                                     </td>
                                 </tr>
                             )}
-                            {activeSessions.map((session) => {
+                            {sessions.map((session) => {
                                 const minutes = session.time_used_minutes ?? formatMinutes(session.started_at, nowMs);
                                 const cost = session.estimated_cost ?? formatCost(minutes, session.rate_php);
 
