@@ -19,11 +19,6 @@ class SessionViewController extends Controller
 
         $sessions = CafeSession::with(['user:id,username,name', 'pc:id,device_id,name,last_seen_at'])
             ->whereNull('cleared_at')
-            ->where(function ($query) use ($now) {
-                $query->where('is_open', true)
-                    ->orWhere('ends_at', '>', $now)
-                    ->orWhere('ends_at', '<=', $now);
-            })
             ->orderByDesc('started_at')
             ->get([
                 'id',
