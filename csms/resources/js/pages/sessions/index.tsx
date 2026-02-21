@@ -165,7 +165,7 @@ function EndSessionButton({ sessionId, endsAt, isOpen }: { sessionId: number; en
     const inFuture = isOpen || new Date(endsAt).getTime() > Date.now();
 
     if (!inFuture) {
-        return <span className="text-xs text-neutral-500">Ended</span>;
+        // return <span className="text-xs text-neutral-500">Ended</span>;
     }
 
     return (
